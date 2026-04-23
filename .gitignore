@@ -35,3 +35,14 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Spring Boot 환경 설정 ###
+application-local.yaml
+application-prod.yaml
+
+### 로그 ###
+*.log
+logs/
+
+### OS ###
+.DS_Store
