@@ -17,3 +17,8 @@ spring:
       port: 6379
       connect-timeout: 1s
       timeout: 1s
+
+jwt:
+  secret: dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktMjU2LWJpdHM=
+  access-token-expiration: 1800000
+  refresh-token-expiration: 604800000

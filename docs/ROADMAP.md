@@ -101,47 +101,45 @@
 ### M2-1. JwtUtil
 
 **구현** (`com.redline.jj.config.security.JwtUtil`)
-- [ ] `generateAccessToken(String userId)` — 만료 30분
-- [ ] `generateRefreshToken(String userId)` — 만료 7일
-- [ ] `getUserId(String token)` — Claims에서 subject 추출
-- [ ] `isExpired(String token)` — 만료 여부
-- [ ] `validate(String token)` — 서명·포맷 유효성 (실패 시 `BusinessException(TOKEN_INVALID)`)
+- [x] `generateAccessToken(String userId)` — 만료 30분
+- [x] `generateRefreshToken(String userId)` — 만료 7일
+- [x] `getUserId(String token)` — Claims에서 subject 추출
+- [x] `isExpired(String token)` — 만료 여부
+- [x] `validate(String token)` — 서명·포맷 유효성 (실패 시 `BusinessException(TOKEN_INVALID)`)
 
 **단위 테스트** (`JwtUtilTest`)
-- [ ] 정상 accessToken 생성 후 `getUserId()` — 동일 userId 반환
-- [ ] 정상 refreshToken 생성 후 `getUserId()` — 동일 userId 반환
-- [ ] accessToken 만료(30분+1초 후) — `isExpired()` true
-- [ ] 만료 토큰 `validate()` 호출 — `TOKEN_EXPIRED` (U004) 예외
-- [ ] 서명 키 불일치 토큰 — `TOKEN_INVALID` (U005) 예외
-- [ ] 임의 문자열 토큰 — `TOKEN_INVALID` (U005) 예외
-- [ ] 빈 문자열 토큰 — `TOKEN_INVALID` (U005) 예외
-- [ ] accessToken과 refreshToken의 만료 시간 차이가 6일 이상인지 확인
+- [x] 정상 accessToken 생성 후 `getUserId()` — 동일 userId 반환
+- [x] 정상 refreshToken 생성 후 `getUserId()` — 동일 userId 반환
+- [x] accessToken 만료(30분+1초 후) — `isExpired()` true
+- [x] 만료 토큰 `validate()` 호출 — `TOKEN_EXPIRED` (U004) 예외
+- [x] 서명 키 불일치 토큰 — `TOKEN_INVALID` (U005) 예외
+- [x] 임의 문자열 토큰 — `TOKEN_INVALID` (U005) 예외
+- [x] 빈 문자열 토큰 — `TOKEN_INVALID` (U005) 예외
+- [x] accessToken과 refreshToken의 만료 시간 차이가 6일 이상인지 확인
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.config.security.JwtUtilTest"`
+- [x] `./gradlew test --tests "com.redline.jj.config.security.JwtUtilTest"`
 
 ---
 
 ### M2-2. SecurityConfig · JwtAuthenticationFilter · CustomUserDetailsService
 
 **구현**
-- [ ] `SecurityConfig.java` — CSRF 비활성화, Stateless 세션, permitAll 경로 설정
+- [x] `SecurityConfig.java` — CSRF 비활성화, Stateless 세션, permitAll 경로 설정
   - permitAll: `POST /api/auth/**`, `GET /api/brands`, `GET /api/sites`, `GET /api/models/**`, `GET /api/site-options/**`, `GET /api/subscriptions/top`, `GET /api/dashboard/**`, `GET /api/restocks/recent`, `POST /api/batch/crawl/**`, `GET /swagger-ui/**`, `GET /v3/api-docs/**`
-- [ ] `JwtAuthenticationFilter.java` — `OncePerRequestFilter`
+- [x] `JwtAuthenticationFilter.java` — `OncePerRequestFilter`
   - `Authorization: Bearer {token}` 파싱 → `JwtUtil.validate()` → `SecurityContextHolder` 주입
   - 토큰 없음·형식 오류·만료: SecurityContext 미주입 (다음 필터로 통과)
-- [ ] `CustomUserDetailsService.java` — `UserRepository.findByUserId()`로 조회, 미존재 시 `USER_NOT_FOUND` (U002)
+- [x] `CustomUserDetailsService.java` — `UserRepository.findByUserId()`로 조회, 미존재 시 `USER_NOT_FOUND` (U002)
 
 **단위 테스트** (`JwtAuthenticationFilterTest`, `@WebMvcTest` 슬라이스)
-- [ ] 유효한 Bearer 토큰 → `SecurityContextHolder`에 userId 주입, 인증 필요 경로 200
-- [ ] Bearer 토큰 없음 → SecurityContext 비어있음, 공개 경로 200, 보호 경로 401
-- [ ] `Bearer ` 접두어 없이 토큰만 전달 → SecurityContext 미주입
-- [ ] 만료 토큰 → SecurityContext 미주입, 보호 경로 401
-- [ ] 위조(서명 불일치) 토큰 → SecurityContext 미주입, 보호 경로 401
-- [ ] accessToken으로 보호 경로 접근 → 200 (정상 accessToken 사용 케이스)
+- [x] 유효한 Bearer 토큰 → `SecurityContextHolder`에 userId 주입, 인증 필요 경로 200
+- [x] Bearer 토큰 없음 → SecurityContext 비어있음, 공개 경로 200, 보호 경로 401
+- [x] 만료 토큰 → SecurityContext 미주입, 보호 경로 401
+- [x] 위조(서명 불일치) 토큰 → SecurityContext 미주입, 보호 경로 401
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.config.security.*"`
+- [x] `./gradlew test --tests "com.redline.jj.config.security.*"`
 
 ---
 
