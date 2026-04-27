@@ -10,11 +10,15 @@ import com.redline.jj.domain.model.Model.ModelType;
 import com.redline.jj.domain.model.ModelRepository;
 import com.redline.jj.domain.option.SiteOption;
 import com.redline.jj.domain.option.SiteOptionRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,29 +31,9 @@ public class ModelService {
     @Transactional(readOnly = true)
     public ModelPageResponse listModels(List<Long> brandIds, List<ModelType> types,
                                         Long cursor, int size) {
-        PageRequest pageable = PageRequest.of(0, size + 1);
-        boolean hasBrandFilter = brandIds != null && !brandIds.isEmpty();
-        boolean hasTypeFilter = types != null && !types.isEmpty();
-
-        List<Model> fetched;
-        if (!hasBrandFilter && !hasTypeFilter && cursor == null) {
-            fetched = modelRepository.findAllByOrderByIdDesc(pageable);
-        } else if (!hasBrandFilter && !hasTypeFilter) {
-            fetched = modelRepository.findByIdLessThanOrderByIdDesc(cursor, pageable);
-        } else if (hasBrandFilter && !hasTypeFilter && cursor == null) {
-            fetched = modelRepository.findByBrand_IdInOrderByIdDesc(brandIds, pageable);
-        } else if (hasBrandFilter && !hasTypeFilter) {
-            fetched = modelRepository.findByIdLessThanAndBrand_IdInOrderByIdDesc(cursor, brandIds, pageable);
-        } else if (!hasBrandFilter && cursor == null) {
-            fetched = modelRepository.findByModelTypeInOrderByIdDesc(types, pageable);
-        } else if (!hasBrandFilter) {
-            fetched = modelRepository.findByIdLessThanAndModelTypeInOrderByIdDesc(cursor, types, pageable);
-        } else if (cursor == null) {
-            fetched = modelRepository.findByBrand_IdInAndModelTypeInOrderByIdDesc(brandIds, types, pageable);
-        } else {
-            fetched = modelRepository.findByIdLessThanAndBrand_IdInAndModelTypeInOrderByIdDesc(
-                cursor, brandIds, types, pageable);
-        }
+        PageRequest pageable = PageRequest.of(0, size + 1, Sort.by(Sort.Direction.DESC, "id"));
+        List<Model> fetched = modelRepository.findAll(buildSpec(brandIds, types, cursor), pageable)
+            .getContent();
 
         boolean hasNext = fetched.size() > size;
         List<ModelResponse> items = fetched.stream()
@@ -72,5 +56,21 @@ public class ModelService {
     @Transactional(readOnly = true)
     public long countModels() {
         return modelRepository.count();
+    }
+
+    private static Specification<Model> buildSpec(List<Long> brandIds, List<ModelType> types, Long cursor) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (cursor != null) {
+                predicates.add(cb.lessThan(root.get("id"), cursor));
+            }
+            if (brandIds != null && !brandIds.isEmpty()) {
+                predicates.add(root.get("brand").get("id").in(brandIds));
+            }
+            if (types != null && !types.isEmpty()) {
+                predicates.add(root.get("modelType").in(types));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
     }
 }
