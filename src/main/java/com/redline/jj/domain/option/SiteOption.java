@@ -45,8 +45,8 @@ public class SiteOption extends BaseEntity {
     @Column(nullable = false)
     private LocalDateTime lastCapturedAt;
 
-    // false→true 전환(재입고) 시에만 true 반환, 상태·가격은 항상 갱신
-    public boolean updateSnapshot(boolean newInStock, int newPrice) {
+    // false→true 전환(재입고) 시에만 true 반환, 상태·가격은 항상 갱신 (newPrice null 허용 - 가격 미표시 사이트 대응)
+    public boolean updateSnapshot(boolean newInStock, Integer newPrice) {
         boolean isRestock = !this.inStock && newInStock;
         this.inStock = newInStock;
         this.price = newPrice;

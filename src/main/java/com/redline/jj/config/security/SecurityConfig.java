@@ -6,8 +6,8 @@ import com.redline.jj.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -38,7 +38,7 @@ public class SecurityConfig {
         return http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .cors(Customizer.withDefaults())
+            .cors(cors -> cors.disable())
             .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(POST, "/api/auth/**").permitAll()
@@ -52,8 +52,9 @@ public class SecurityConfig {
             )
             .exceptionHandling(ex -> ex.authenticationEntryPoint(
                 (request, response, e) -> {
-                    response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
-                    response.setStatus(401);
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    response.setCharacterEncoding("UTF-8");
+                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
                     response.getWriter().write(
                         objectMapper.writeValueAsString(ApiResponse.fail(ErrorCode.UNAUTHORIZED))
                     );
