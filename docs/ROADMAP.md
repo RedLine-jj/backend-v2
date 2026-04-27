@@ -249,29 +249,29 @@
 ### M6-1. SubscriptionController · SubscriptionService
 
 **구현**
-- [ ] `GET /api/subscriptions` — 내 구독 목록 (인증 필요)
-- [ ] `GET /api/subscriptions/count` — 내 구독 수 (인증 필요)
-- [ ] `POST /api/subscriptions` — 구독 등록, Request: `modelId(Long)` (인증 필요)
-- [ ] `DELETE /api/subscriptions/{id}` — 구독 취소 (인증 필요)
-- [ ] `GET /api/subscriptions/top` — 전체 기준 구독 TOP 10 (인증 불필요)
+- [x] `GET /api/subscriptions` — 내 구독 목록 (인증 필요)
+- [x] `GET /api/subscriptions/count` — 내 구독 수 (인증 필요)
+- [x] `POST /api/subscriptions` — 구독 등록, Request: `modelId(Long)` (인증 필요)
+- [x] `DELETE /api/subscriptions/{id}` — 구독 취소 (인증 필요)
+- [x] `GET /api/subscriptions/top` — 전체 기준 구독 TOP 10 (인증 불필요)
 
 **단위 테스트** (`SubscriptionServiceTest`, Mockito)
-- [ ] `subscribe(userId, modelId)` — 정상: `Subscription` 1건 저장, 저장 결과 반환
-- [ ] `subscribe(userId, modelId)` — 이미 구독 중 → `SUBSCRIPTION_ALREADY_EXISTS` (S001)
-- [ ] `subscribe(userId, 없는 modelId)` — `MODEL_NOT_FOUND` (M001)
-- [ ] `cancel(userId, subscriptionId)` — 본인 구독 취소 정상
-- [ ] `cancel(userId, 타인의 subscriptionId)` — `SUBSCRIPTION_NOT_FOUND` (S002) (정보 노출 방지)
-- [ ] `cancel(userId, 없는 subscriptionId)` — `SUBSCRIPTION_NOT_FOUND` (S002)
-- [ ] `getTop10()` — 구독 수 기준 내림차순 TOP 10 반환, 11번째 미포함 확인
-- [ ] `existsAny()` — 구독 1건 이상: true / 0건: false
+- [x] `subscribe(userId, modelId)` — 정상: `Subscription` 1건 저장, 저장 결과 반환
+- [x] `subscribe(userId, modelId)` — 이미 구독 중 → `SUBSCRIPTION_ALREADY_EXISTS` (S001)
+- [x] `subscribe(userId, 없는 modelId)` — `MODEL_NOT_FOUND` (M001)
+- [x] `cancel(userId, subscriptionId)` — 본인 구독 취소 정상
+- [x] `cancel(userId, 타인의 subscriptionId)` — `SUBSCRIPTION_ACCESS_DENIED` (S003) (403 반환, S002→S003으로 변경)
+- [x] `cancel(userId, 없는 subscriptionId)` — `SUBSCRIPTION_NOT_FOUND` (S002)
+- [x] `getTop10()` — 구독 수 기준 내림차순 TOP 10 반환, 11번째 미포함 확인
+- [ ] `existsAny()` — 구독 1건 이상: true / 0건: false (M9 BatchScheduler 구현 시 함께 추가)
 
 **컨트롤러 테스트** (`@WebMvcTest`)
-- [ ] `POST /api/subscriptions` 비인증 → 401
-- [ ] `DELETE /api/subscriptions/{id}` 비인증 → 401
-- [ ] `GET /api/subscriptions/top` 비인증 → 200 (공개 API)
+- [x] `POST /api/subscriptions` 비인증 → 401
+- [x] `DELETE /api/subscriptions/{id}` 비인증 → 401
+- [x] `GET /api/subscriptions/top` 비인증 → 200 (공개 API)
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.api.subscription.*"`
+- [x] `./gradlew test --tests "com.redline.jj.api.subscription.*"`
 
 ---
 

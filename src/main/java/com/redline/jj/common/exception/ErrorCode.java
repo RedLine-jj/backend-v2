@@ -25,6 +25,7 @@ public enum ErrorCode {
 
     SUBSCRIPTION_ALREADY_EXISTS(HttpStatus.CONFLICT, "S001", "이미 구독 중입니다."),
     SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "S002", "구독을 찾을 수 없습니다."),
+    SUBSCRIPTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "S003", "구독에 접근할 권한이 없습니다."),
 
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다."),
     NOTIFICATION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "N002", "알림에 접근할 권한이 없습니다."),
