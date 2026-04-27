@@ -70,4 +70,21 @@ class ModelAliasRepositoryTest {
             ModelAlias.builder().model(model).aliasName("같은상품명").build()))
             .isInstanceOf(DataIntegrityViolationException.class);
     }
+
+    @Test
+    void 다른_model이라도_동일_aliasName_저장시_예외가_발생한다() {
+        Brand otherBrand = brandRepository.save(Brand.builder().brandName("디젤").build());
+        Model otherModel = modelRepository.save(Model.builder()
+            .brand(otherBrand)
+            .modelName("D-staq")
+            .modelType(ModelType.DENIM_PANTS)
+            .build());
+
+        modelAliasRepository.saveAndFlush(ModelAlias.builder()
+            .model(model).aliasName("공유상품명").build());
+
+        assertThatThrownBy(() -> modelAliasRepository.saveAndFlush(
+            ModelAlias.builder().model(otherModel).aliasName("공유상품명").build()))
+            .isInstanceOf(DataIntegrityViolationException.class);
+    }
 }
