@@ -204,43 +204,43 @@
 ### M5-1. ModelController · ModelService
 
 **구현**
-- [ ] `GET /api/models` — `brandIds[]`, `types[]` 필터 + 커서 페이지네이션 (`cursor`, `size=20`)
-- [ ] `GET /api/models/{id}` — 모델 기본 정보 + `siteOptions[]` (사이트명·옵션명·가격·재고 상태); 미존재 시 M001
-- [ ] `GET /api/models/count` — 전체 모델 수
+- [x] `GET /api/models` — `brandIds[]`, `types[]` 필터 + 커서 페이지네이션 (`cursor`, `size=20`)
+- [x] `GET /api/models/{id}` — 모델 기본 정보 + `siteOptions[]` (사이트명·옵션명·가격·재고 상태); 미존재 시 M001
+- [x] `GET /api/models/count` — 전체 모델 수
 
 **단위 테스트** (`ModelServiceTest`, Mockito)
-- [ ] `getModels(null, null, null, 20)` — 필터 없이 전체 조회
-- [ ] `getModels([brandId], null, null, 20)` — 브랜드 필터 적용
-- [ ] `getModels(null, [DENIM_PANTS], null, 20)` — 타입 필터 적용
-- [ ] `getModels(null, null, cursor=5, 20)` — cursor 이후 20개 반환
-- [ ] `getModels(null, null, cursor=마지막, 20)` — 빈 리스트 반환 (다음 페이지 없음)
-- [ ] `getModel(존재하는 id)` — siteOptions 포함 반환
-- [ ] `getModel(없는 id)` — `MODEL_NOT_FOUND` (M001)
+- [x] `getModels(null, null, null, 20)` — 필터 없이 전체 조회
+- [x] `getModels([brandId], null, null, 20)` — 브랜드 필터 적용
+- [x] `getModels(null, [DENIM_PANTS], null, 20)` — 타입 필터 적용
+- [x] `getModels(null, null, cursor=5, 20)` — cursor 이후 20개 반환
+- [x] `getModels(null, null, cursor=마지막, 20)` — 빈 리스트 반환 (다음 페이지 없음)
+- [x] `getModel(존재하는 id)` — siteOptions 포함 반환
+- [x] `getModel(없는 id)` — `MODEL_NOT_FOUND` (M001)
 
 **컨트롤러 테스트** (`@WebMvcTest`)
-- [ ] `GET /api/models?brandIds=1,2&types=DENIM_PANTS&cursor=10&size=5` — 파라미터 바인딩 정상
-- [ ] `GET /api/models/999` — 404 M001
+- [x] `GET /api/models?brandIds=1,2&types=DENIM_PANTS&cursor=10&size=5` — 파라미터 바인딩 정상
+- [x] `GET /api/models/999` — 404 M001
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.api.model.*"`
+- [x] `./gradlew test --tests "com.redline.jj.api.model.*"`
 
 ---
 
 ### M5-2. SiteOptionController · SiteOptionService
 
 **구현**
-- [ ] `GET /api/site-options` — `siteId`, `modelId`, `status` 필터
-- [ ] `GET /api/site-options/{id}` — 옵션 상세; 미존재 시 M002
-- [ ] `GET /api/site-options/{id}/logs` — 가격·재고 변동 이력 목록
+- [x] `GET /api/site-options` — `siteId`, `modelId`, `inStock` 필터
+- [x] `GET /api/site-options/{id}` — 옵션 상세; 미존재 시 M002
+- [x] `GET /api/site-options/{id}/logs` — 가격·재고 변동 이력 목록
 
 **단위 테스트** (`SiteOptionServiceTest`, Mockito)
-- [ ] 각 필터 단독·조합 적용 시 Repository 호출 파라미터 verify
-- [ ] `getSiteOption(없는 id)` — `SITE_OPTION_NOT_FOUND` (M002)
-- [ ] `getLogs(id)` — SiteOptionLog 최신순 반환
+- [x] 각 필터 단독·조합 적용 시 Repository 호출 파라미터 verify
+- [x] `getSiteOption(없는 id)` — `SITE_OPTION_NOT_FOUND` (M002)
+- [x] `getLogs(id)` — SiteOptionLog 최신순 반환
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.api.option.*"`
-- [ ] `./gradlew test` — M1~M5 전체 그린 확인
+- [x] `./gradlew test --tests "com.redline.jj.api.option.*"`
+- [x] `./gradlew test` — M1~M5 전체 그린 확인
 
 ---
 
