@@ -51,7 +51,7 @@ class ModelControllerTest {
     @Test
     void getModels_파라미터_바인딩_정상() throws Exception {
         ModelPageResponse response = ModelPageResponse.of(List.of(), null, false);
-        given(modelService.listModels(any(), any(), eq(10L), eq(5))).willReturn(response);
+        given(modelService.listModels(eq(List.of(1L, 2L)), eq(List.of(ModelType.DENIM_PANTS)), eq(10L), eq(5))).willReturn(response);
 
         mockMvc.perform(get("/api/models")
                 .param("brandIds", "1", "2")

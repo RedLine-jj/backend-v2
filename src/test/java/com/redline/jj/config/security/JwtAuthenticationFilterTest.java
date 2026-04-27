@@ -28,7 +28,7 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest
+@WebMvcTest(controllers = JwtAuthenticationFilterTest.TestController.class)
 @Import({JwtAuthenticationFilterTest.TestController.class, JwtUtil.class, CustomUserDetailsService.class})
 @TestPropertySource(properties = {
     "jwt.secret=dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktMjU2LWJpdHM=",
@@ -45,18 +45,6 @@ class JwtAuthenticationFilterTest {
 
     @MockitoBean
     private UserRepository userRepository;
-
-    @MockitoBean
-    private com.redline.jj.api.auth.AuthService authService;
-
-    @MockitoBean
-    private com.redline.jj.api.model.ModelService modelService;
-
-    @MockitoBean
-    private com.redline.jj.api.option.SiteOptionService siteOptionService;
-
-    @MockitoBean
-    private com.redline.jj.api.master.MasterDataService masterDataService;
 
     @TestConfiguration
     static class TestSecurityConfig {
