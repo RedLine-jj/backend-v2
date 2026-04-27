@@ -23,20 +23,20 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
         JOIN FETCH s.user
         JOIN FETCH s.model m
         JOIN FETCH m.brand
-        WHERE s.user.id = :userId
+        WHERE s.user.userId = :userLoginId
         """)
-    List<Subscription> findByUser_Id(@Param("userId") Long userId);
+    List<Subscription> findByUser_UserId(@Param("userLoginId") String userLoginId);
 
-    long countByUser_Id(Long userId);
+    long countByUser_UserId(String userLoginId);
 
     @Query("""
-        SELECT s.model.id      AS modelId,
-               s.model.modelName AS modelName,
-               s.model.brand.brandName AS brandName
+        SELECT m.id        AS modelId,
+               m.modelName AS modelName,
+               b.brandName AS brandName
         FROM Subscription s
         JOIN s.model m
         JOIN m.brand b
-        GROUP BY s.model.id, s.model.modelName, s.model.brand.brandName
+        GROUP BY m.id, m.modelName, b.brandName
         ORDER BY COUNT(s) DESC
         LIMIT 10
         """)

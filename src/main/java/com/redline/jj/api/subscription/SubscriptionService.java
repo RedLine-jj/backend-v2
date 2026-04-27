@@ -54,14 +54,12 @@ public class SubscriptionService {
             throw new BusinessException(ErrorCode.SUBSCRIPTION_ACCESS_DENIED);
         }
 
-        subscriptionRepository.deleteById(subscriptionId);
+        subscriptionRepository.delete(subscription);
     }
 
     @Transactional(readOnly = true)
     public List<SubscriptionResponse> getMySubscriptions(String userLoginId) {
-        User user = userFinder.getByLoginId(userLoginId);
-
-        return subscriptionRepository.findByUser_Id(user.getId())
+        return subscriptionRepository.findByUser_UserId(userLoginId)
             .stream()
             .map(SubscriptionResponse::from)
             .toList();
@@ -69,9 +67,7 @@ public class SubscriptionService {
 
     @Transactional(readOnly = true)
     public long getMySubscriptionCount(String userLoginId) {
-        User user = userFinder.getByLoginId(userLoginId);
-
-        return subscriptionRepository.countByUser_Id(user.getId());
+        return subscriptionRepository.countByUser_UserId(userLoginId);
     }
 
     @Transactional(readOnly = true)
