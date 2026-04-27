@@ -148,30 +148,30 @@
 ### M3-1. AuthController · AuthService
 
 **구현**
-- [ ] `com.redline.jj.api.auth.AuthController` — `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/refresh`
-- [ ] `com.redline.jj.api.auth.AuthService`
-- [ ] `SignupRequest`, `LoginRequest`, `LoginResponse`, `RefreshRequest`, `RefreshResponse` DTO (Bean Validation 포함)
+- [x] `com.redline.jj.api.auth.AuthController` — `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/refresh`
+- [x] `com.redline.jj.api.auth.AuthService`
+- [x] `SignupRequest`, `LoginRequest`, `LoginResponse`, `RefreshRequest`, `RefreshResponse` DTO (Bean Validation 포함)
 
 **단위 테스트** (`AuthServiceTest`, Mockito)
-- [ ] `signup` — 정상: bcrypt 암호화 후 저장, 원문 비밀번호 DB 미저장 확인 (`passwordEncoder.encode()` 호출 verify)
-- [ ] `signup` — 이미 존재하는 userId → `USER_ALREADY_EXISTS` (U001)
-- [ ] `login` — 정상: accessToken·refreshToken 비어있지 않게 반환
-- [ ] `login` — 없는 userId → `INVALID_PASSWORD` (U003) (userId 존재 여부 노출 방지)
-- [ ] `login` — 잘못된 비밀번호 → `INVALID_PASSWORD` (U003)
-- [ ] `login` — `passwordEncoder.matches()` 호출 횟수 1회 verify
-- [ ] `refresh` — 정상 refreshToken → 새 accessToken 반환
-- [ ] `refresh` — 만료된 refreshToken → `TOKEN_EXPIRED` (U004)
-- [ ] `refresh` — 위조 토큰 → `TOKEN_INVALID` (U005)
-- [ ] `refresh` — accessToken을 refreshToken 자리에 → `TOKEN_INVALID` (U005)
+- [x] `signup` — 정상: bcrypt 암호화 후 저장, 원문 비밀번호 DB 미저장 확인 (`passwordEncoder.encode()` 호출 verify)
+- [x] `signup` — 이미 존재하는 userId → `USER_ALREADY_EXISTS` (U001)
+- [x] `login` — 정상: accessToken·refreshToken 비어있지 않게 반환
+- [x] `login` — 없는 userId → `INVALID_PASSWORD` (U003) (userId 존재 여부 노출 방지)
+- [x] `login` — 잘못된 비밀번호 → `INVALID_PASSWORD` (U003)
+- [x] `login` — `passwordEncoder.matches()` 호출 횟수 1회 verify
+- [x] `refresh` — 정상 refreshToken → 새 accessToken 반환
+- [x] `refresh` — 만료된 refreshToken → `TOKEN_EXPIRED` (U004)
+- [x] `refresh` — 위조 토큰 → `TOKEN_INVALID` (U005)
+- [x] `refresh` — accessToken을 refreshToken 자리에 → `TOKEN_INVALID` (U005)
 
 **컨트롤러 테스트** (`AuthControllerTest`, `@WebMvcTest`)
-- [ ] `POST /api/auth/signup` — 정상 요청 201 또는 200
-- [ ] `POST /api/auth/signup` — 필수 필드 누락 → 400
-- [ ] `POST /api/auth/login` — 정상 요청 → accessToken·refreshToken 포함 응답
-- [ ] `POST /api/auth/refresh` — 정상 요청 → accessToken 포함 응답
+- [x] `POST /api/auth/signup` — 정상 요청 201 또는 200
+- [x] `POST /api/auth/signup` — 필수 필드 누락 → 400
+- [x] `POST /api/auth/login` — 정상 요청 → accessToken·refreshToken 포함 응답
+- [x] `POST /api/auth/refresh` — 정상 요청 → accessToken 포함 응답
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.api.auth.*"`
+- [x] `./gradlew test --tests "com.redline.jj.api.auth.*"`
 
 ---
 
@@ -180,22 +180,22 @@
 ### M4-1. BrandController · SiteController · ModelTypeController
 
 **구현**
-- [ ] `GET /api/brands` — `@Cacheable("brands")`, `List<BrandResponse>` 반환
-- [ ] `GET /api/sites` — `@Cacheable("sites")`, `List<SiteResponse>` 반환
-- [ ] `GET /api/models/types` — ModelType enum 목록 반환 (캐시 불필요)
+- [x] `GET /api/brands` — `@Cacheable("brands")`, `List<BrandResponse>` 반환
+- [x] `GET /api/sites` — `@Cacheable("sites")`, `List<SiteResponse>` 반환
+- [x] `GET /api/models/types` — ModelType enum 목록 반환 (캐시 불필요)
 
 **단위 테스트** (`MasterDataServiceTest`, Mockito)
-- [ ] `getBrands()` 첫 호출: `BrandRepository.findAll()` 1회 호출
-- [ ] `getBrands()` 두 번째 호출: `BrandRepository.findAll()` 미호출 (캐시 hit)
-- [ ] `getSites()` 동일 패턴
+- [x] `getBrands()` 첫 호출: `BrandRepository.findAll()` 1회 호출
+- [x] `getBrands()` 두 번째 호출: `BrandRepository.findAll()` 미호출 (캐시 hit)
+- [x] `getSites()` 동일 패턴
 
-**통합 테스트** (`@SpringBootTest` + Testcontainers Redis)
-- [ ] 첫 조회 후 Redis에 `brands` 키 존재 확인
-- [ ] 캐시 TTL 10분 설정 확인
-- [ ] `@CacheEvict("brands")` 호출 후 캐시 키 삭제 확인
+**통합 테스트** (`@SpringBootTest` + 로컬 Redis)
+- [x] 첫 조회 후 Redis에 `brands` 키 존재 확인
+- [x] 캐시 TTL 10분 설정 확인
+- [x] `@CacheEvict("brands")` 호출 후 캐시 키 삭제 확인
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.api.brand.*"` + `"com.redline.jj.api.site.*"`
+- [x] `./gradlew test --tests "com.redline.jj.api.master.*"`
 
 ---
 
