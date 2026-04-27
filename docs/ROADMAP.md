@@ -10,44 +10,44 @@
 ### M1-1. build.gradle 의존성 추가
 
 **구현**
-- [ ] `io.jsonwebtoken:jjwt-api:0.12.x`, `jjwt-impl`, `jjwt-jackson` 추가
-- [ ] `spring-boot-starter-security` 추가
-- [ ] `spring-boot-starter-webflux` 추가 (WebClient)
-- [ ] `org.jsoup:jsoup` 추가
-- [ ] `com.bucket4j:bucket4j-core` 추가
-- [ ] `org.testcontainers:redis`, `testcontainers` 추가 (testImplementation)
-- [ ] `com.squareup.okhttp3:mockwebserver` 추가 (testImplementation, Groq·imweb Mock용)
+- [x] `io.jsonwebtoken:jjwt-api:0.12.x`, `jjwt-impl`, `jjwt-jackson` 추가
+- [x] `spring-boot-starter-security` 추가
+- [x] `spring-boot-starter-webflux` 추가 (WebClient)
+- [x] `org.jsoup:jsoup` 추가
+- [x] `com.bucket4j:bucket4j-core` 추가
+- [x] `org.testcontainers:redis`, `testcontainers` 추가 (testImplementation)
+- [x] `com.squareup.okhttp3:mockwebserver` 추가 (testImplementation, Groq·imweb Mock용)
 
 **테스트 실행**
-- [ ] `./gradlew clean build -x test` — 빌드 성공 확인
+- [x] `./gradlew clean build -x test` — 빌드 성공 확인
 
 ---
 
 ### M1-2. ErrorCode 14개 추가
 
 **구현** (`com.redline.jj.common.exception.ErrorCode`)
-- [ ] U001 `USER_ALREADY_EXISTS` — 409 CONFLICT
-- [ ] U002 `USER_NOT_FOUND` — 404 NOT_FOUND
-- [ ] U003 `INVALID_PASSWORD` — 401 UNAUTHORIZED
-- [ ] U004 `TOKEN_EXPIRED` — 401 UNAUTHORIZED
-- [ ] U005 `TOKEN_INVALID` — 401 UNAUTHORIZED
-- [ ] U006 `RATE_LIMIT_EXCEEDED` — 429 TOO_MANY_REQUESTS
-- [ ] M001 `MODEL_NOT_FOUND` — 404 NOT_FOUND
-- [ ] M002 `SITE_OPTION_NOT_FOUND` — 404 NOT_FOUND
-- [ ] S001 `SUBSCRIPTION_ALREADY_EXISTS` — 409 CONFLICT
-- [ ] S002 `SUBSCRIPTION_NOT_FOUND` — 404 NOT_FOUND
-- [ ] N001 `NOTIFICATION_NOT_FOUND` — 404 NOT_FOUND
-- [ ] N002 `NOTIFICATION_ACCESS_DENIED` — 403 FORBIDDEN
-- [ ] C001 `LLM_MATCHING_FAILED` — 500 INTERNAL_SERVER_ERROR
-- [ ] C002 `CRAWLING_FAILED` — 500 INTERNAL_SERVER_ERROR
+- [x] U001 `USER_ALREADY_EXISTS` — 409 CONFLICT
+- [x] U002 `USER_NOT_FOUND` — 404 NOT_FOUND
+- [x] U003 `INVALID_PASSWORD` — 401 UNAUTHORIZED
+- [x] U004 `TOKEN_EXPIRED` — 401 UNAUTHORIZED
+- [x] U005 `TOKEN_INVALID` — 401 UNAUTHORIZED
+- [x] U006 `RATE_LIMIT_EXCEEDED` — 429 TOO_MANY_REQUESTS
+- [x] M001 `MODEL_NOT_FOUND` — 404 NOT_FOUND
+- [x] M002 `SITE_OPTION_NOT_FOUND` — 404 NOT_FOUND
+- [x] S001 `SUBSCRIPTION_ALREADY_EXISTS` — 409 CONFLICT
+- [x] S002 `SUBSCRIPTION_NOT_FOUND` — 404 NOT_FOUND
+- [x] N001 `NOTIFICATION_NOT_FOUND` — 404 NOT_FOUND
+- [x] N002 `NOTIFICATION_ACCESS_DENIED` — 403 FORBIDDEN
+- [x] C001 `LLM_MATCHING_FAILED` — 500 INTERNAL_SERVER_ERROR
+- [x] C002 `CRAWLING_FAILED` — 500 INTERNAL_SERVER_ERROR
 
 **단위 테스트** (`ErrorCodeTest`)
-- [ ] 각 ErrorCode의 httpStatus·code·message 값이 PRD 명세와 일치하는지 파라미터화 검증
-- [ ] `GlobalExceptionHandler`가 `BusinessException(ErrorCode.U001)` 수신 시 HTTP 409 + `ApiResponse.fail` 반환 확인 (`@WebMvcTest` + MockMvc)
-- [ ] 존재하지 않는 코드값으로 조회 시 NPE 미발생
+- [x] 각 ErrorCode의 httpStatus·code·message 값이 PRD 명세와 일치하는지 파라미터화 검증
+- [x] `GlobalExceptionHandler`가 `BusinessException(ErrorCode.U001)` 수신 시 HTTP 409 + `ApiResponse.fail` 반환 확인 (`@WebMvcTest` + MockMvc)
+- [x] 존재하지 않는 코드값으로 조회 시 NPE 미발생
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.common.exception.ErrorCodeTest"`
+- [x] `./gradlew test --tests "com.redline.jj.common.exception.ErrorCodeTest"`
 
 ---
 
