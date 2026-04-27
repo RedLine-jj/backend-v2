@@ -45,12 +45,37 @@ dependencies {
     // Actuator (health check)
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    // Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // WebFlux (WebClient)
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // Jsoup
+    implementation 'org.jsoup:jsoup:1.18.3'
+
+    // Bucket4j
+    implementation 'com.bucket4j:bucket4j-core:8.10.1'
+
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'com.h2database:h2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // Testcontainers
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:redis'
+
+    // MockWebServer
+    testImplementation 'com.squareup.okhttp3:mockwebserver'
 }
 
 tasks.named('test') {
