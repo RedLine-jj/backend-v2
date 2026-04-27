@@ -9,6 +9,8 @@ import com.redline.jj.domain.model.ModelRepository;
 import com.redline.jj.domain.user.User;
 import com.redline.jj.domain.user.UserRepository;
 import jakarta.persistence.EntityManager;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -131,31 +133,37 @@ class SubscriptionRepositoryTest {
     }
 
     // =========================================================================
-    // findByUser_Id — N+1 검증 (model, brand JOIN FETCH)
+    // findByUser_UserId — N+1 검증 (model, brand JOIN FETCH)
     // =========================================================================
 
     @Test
-    @DisplayName("findByUser_Id: model과 brand가 JOIN FETCH되어 단일 쿼리로 로딩된다")
-    void findByUser_Id_model과_brand가_즉시로딩된다() {
+    @DisplayName("findByUser_UserId: model과 brand가 JOIN FETCH되어 단일 SQL 쿼리로 로딩된다")
+    void findByUser_UserId_model과_brand가_즉시로딩된다() {
         subscriptionRepository.saveAndFlush(Subscription.builder().user(user).model(model).build());
-        // 1차 캐시 제거 — 캐시에서 꺼내오면 쿼리가 발생하지 않아 검증이 무의미해진다
-        em.flush();
         em.clear();
 
-        List<Subscription> results = subscriptionRepository.findByUser_Id(user.getId());
+        Statistics stats = em.getEntityManagerFactory()
+            .unwrap(SessionFactory.class)
+            .getStatistics();
+        stats.setStatisticsEnabled(true);
+        stats.clear();
+
+        List<Subscription> results = subscriptionRepository.findByUser_UserId("testUser");
 
         assertThat(results).hasSize(1);
         Subscription sub = results.get(0);
-        // em.clear() 이후 세션 내에서 프록시 초기화 — N+1이라면 이미 세션이 닫혔을 때 예외가 발생하지만
-        // DataJpaTest 트랜잭션 내부이므로 "데이터가 올바르게 로딩됐는지"로 검증한다
         assertThat(sub.getModel().getModelName()).isEqualTo("501");
         assertThat(sub.getModel().getBrand().getBrandName()).isEqualTo("리바이스");
         assertThat(sub.getUser().getUserId()).isEqualTo("testUser");
+        // JOIN FETCH가 올바르게 적용됐다면 SELECT 1회만 발생해야 한다
+        assertThat(stats.getPrepareStatementCount()).isEqualTo(1);
+
+        stats.setStatisticsEnabled(false);
     }
 
     @Test
-    @DisplayName("findByUser_Id: 해당 user의 구독만 반환하고 다른 user 구독은 포함하지 않는다")
-    void findByUser_Id_다른_유저의_구독은_반환하지_않는다() {
+    @DisplayName("findByUser_UserId: 해당 user의 구독만 반환하고 다른 user 구독은 포함하지 않는다")
+    void findByUser_UserId_다른_유저의_구독은_반환하지_않는다() {
         User anotherUser = userRepository.save(User.builder()
             .userId("anotherUser")
             .userPw("pw")
@@ -169,19 +177,18 @@ class SubscriptionRepositoryTest {
 
         subscriptionRepository.saveAndFlush(Subscription.builder().user(user).model(model).build());
         subscriptionRepository.saveAndFlush(Subscription.builder().user(anotherUser).model(anotherModel).build());
-        em.flush();
         em.clear();
 
-        List<Subscription> results = subscriptionRepository.findByUser_Id(user.getId());
+        List<Subscription> results = subscriptionRepository.findByUser_UserId("testUser");
 
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getUser().getUserId()).isEqualTo("testUser");
     }
 
     @Test
-    @DisplayName("findByUser_Id: 구독이 없는 user는 빈 리스트를 반환한다")
-    void findByUser_Id_구독없는_유저는_빈리스트반환() {
-        List<Subscription> results = subscriptionRepository.findByUser_Id(user.getId());
+    @DisplayName("findByUser_UserId: 구독이 없는 user는 빈 리스트를 반환한다")
+    void findByUser_UserId_구독없는_유저는_빈리스트반환() {
+        List<Subscription> results = subscriptionRepository.findByUser_UserId("testUser");
 
         assertThat(results).isEmpty();
     }

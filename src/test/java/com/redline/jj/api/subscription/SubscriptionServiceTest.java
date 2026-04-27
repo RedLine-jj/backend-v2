@@ -78,8 +78,9 @@ class SubscriptionServiceTest {
         given(user.getUserId()).willReturn("user1");
         given(model.getId()).willReturn(1L);
         given(model.getModelName()).willReturn("모델명");
-        given(model.getBrand()).willReturn(mock(com.redline.jj.domain.brand.Brand.class));
-        given(model.getBrand().getBrandName()).willReturn("브랜드명");
+        com.redline.jj.domain.brand.Brand brandMock = mock(com.redline.jj.domain.brand.Brand.class);
+        given(model.getBrand()).willReturn(brandMock);
+        given(brandMock.getBrandName()).willReturn("브랜드명");
 
         // when
         SubscriptionResponse result = subscriptionService.subscribe("user1", 1L);
@@ -141,7 +142,7 @@ class SubscriptionServiceTest {
     // =========================================================================
 
     @Test
-    @DisplayName("cancel: 정상 취소 시 deleteById 호출")
+    @DisplayName("cancel: 정상 취소 시 로드된 엔티티로 delete 호출")
     void cancel_정상_삭제호출() {
         // given
         given(subscriptionRepository.findByIdWithUser(1L)).willReturn(Optional.of(subscription));
@@ -152,7 +153,7 @@ class SubscriptionServiceTest {
         subscriptionService.cancel("user1", 1L);
 
         // then
-        verify(subscriptionRepository).deleteById(1L);
+        verify(subscriptionRepository).delete(subscription);
     }
 
     @Test
