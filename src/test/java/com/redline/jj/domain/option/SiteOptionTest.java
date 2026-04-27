@@ -9,7 +9,7 @@ class SiteOptionTest {
     @Test
     void inStock이_false에서_true로_바뀔때만_true를_반환한다() {
         SiteOption option = SiteOption.builder()
-            .optionName("S")
+            .optionLabel("S")
             .price(99000)
             .build();
 
@@ -23,7 +23,7 @@ class SiteOptionTest {
     @Test
     void 이미_inStock인_상태에서_true_유지시_false를_반환한다() {
         SiteOption option = SiteOption.builder()
-            .optionName("M")
+            .optionLabel("M")
             .inStock(true)
             .price(99000)
             .build();
@@ -37,7 +37,7 @@ class SiteOptionTest {
     @Test
     void 가격만_변경될때_false를_반환하고_가격은_갱신된다() {
         SiteOption option = SiteOption.builder()
-            .optionName("M")
+            .optionLabel("M")
             .inStock(true)
             .price(99000)
             .build();
@@ -51,7 +51,7 @@ class SiteOptionTest {
     @Test
     void true에서_false로_전환시_false를_반환하고_상태는_갱신된다() {
         SiteOption option = SiteOption.builder()
-            .optionName("L")
+            .optionLabel("L")
             .inStock(true)
             .price(99000)
             .build();
@@ -65,7 +65,7 @@ class SiteOptionTest {
     @Test
     void false에서_false로_유지시_false를_반환한다() {
         SiteOption option = SiteOption.builder()
-            .optionName("XL")
+            .optionLabel("XL")
             .price(99000)
             .build();
 

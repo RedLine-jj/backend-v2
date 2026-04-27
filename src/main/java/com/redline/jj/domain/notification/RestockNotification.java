@@ -26,7 +26,7 @@ public class RestockNotification extends BaseEntity {
     @JoinColumn(name = "model_id", nullable = false)
     private Model model;
 
-    @Column(name = "is_read", nullable = false)
+    @Column(name = "read_yn", nullable = false)
     @Builder.Default
     private boolean read = false;
 

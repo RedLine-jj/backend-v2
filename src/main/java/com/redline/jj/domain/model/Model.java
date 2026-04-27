@@ -7,7 +7,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "tb_model",
-    uniqueConstraints = @UniqueConstraint(name = "uk_model", columnNames = {"brand_id", "model_name"}))
+    uniqueConstraints = @UniqueConstraint(name = "uk_brand_model", columnNames = {"brand_id", "model_name"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -27,7 +27,10 @@ public class Model extends BaseEntity {
     @Column(nullable = false)
     private String modelName;
 
+    @Column
+    private String imageUrl;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "type")
     private ModelType modelType;
 }

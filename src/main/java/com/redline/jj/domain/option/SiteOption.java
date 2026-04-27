@@ -6,9 +6,11 @@ import com.redline.jj.domain.site.Site;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "tb_site_option",
-    uniqueConstraints = @UniqueConstraint(name = "uk_site_option", columnNames = {"model_id", "site_id", "option_name"}))
+    uniqueConstraints = @UniqueConstraint(name = "uk_site_model_option", columnNames = {"site_id", "model_id", "option_label"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -20,22 +22,28 @@ public class SiteOption extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "model_id", nullable = false)
-    private Model model;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "site_id", nullable = false)
     private Site site;
 
-    @Column(nullable = false)
-    private String optionName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "model_id", nullable = false)
+    private Model model;
 
-    @Column(name = "in_stock", nullable = false)
+    @Column(name = "option_label", nullable = false)
+    private String optionLabel;
+
+    @Column(nullable = false)
+    private String url;
+
+    @Column(name = "status", nullable = false)
     @Builder.Default
     private boolean inStock = false;
 
+    @Column
+    private Integer price;
+
     @Column(nullable = false)
-    private int price;
+    private LocalDateTime lastCapturedAt;
 
     // false→true 전환(재입고) 시에만 true 반환, 상태·가격은 항상 갱신
     public boolean updateSnapshot(boolean newInStock, int newPrice) {
