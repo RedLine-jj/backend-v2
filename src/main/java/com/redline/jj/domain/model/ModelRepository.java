@@ -15,18 +15,21 @@ public interface ModelRepository extends JpaRepository<Model, Long> {
     // 필터 없음, cursor 있음
     List<Model> findByIdLessThanOrderByIdDesc(Long cursorId, Pageable pageable);
 
+    // 브랜드 필터만, cursor 없음
+    List<Model> findByBrand_IdInOrderByIdDesc(Collection<Long> brandIdList, Pageable pageable);
+
+    // 브랜드 필터만, cursor 있음
+    List<Model> findByIdLessThanAndBrand_IdInOrderByIdDesc(Long cursorId, Collection<Long> brandIdList, Pageable pageable);
+
+    // 타입 필터만, cursor 없음
+    List<Model> findByModelTypeInOrderByIdDesc(Collection<ModelType> types, Pageable pageable);
+
+    // 타입 필터만, cursor 있음
+    List<Model> findByIdLessThanAndModelTypeInOrderByIdDesc(Long cursorId, Collection<ModelType> types, Pageable pageable);
+
     // 브랜드+타입 필터, cursor 없음
-    List<Model> findByBrand_IdInAndModelTypeInOrderByIdDesc(
-        Collection<Long> brandIdList,
-        Collection<ModelType> types,
-        Pageable pageable
-    );
+    List<Model> findByBrand_IdInAndModelTypeInOrderByIdDesc(Collection<Long> brandIdList, Collection<ModelType> types, Pageable pageable);
 
     // 브랜드+타입 필터, cursor 있음
-    List<Model> findByIdLessThanAndBrand_IdInAndModelTypeInOrderByIdDesc(
-        Long cursorId,
-        Collection<Long> brandIdList,
-        Collection<ModelType> types,
-        Pageable pageable
-    );
+    List<Model> findByIdLessThanAndBrand_IdInAndModelTypeInOrderByIdDesc(Long cursorId, Collection<Long> brandIdList, Collection<ModelType> types, Pageable pageable);
 }
