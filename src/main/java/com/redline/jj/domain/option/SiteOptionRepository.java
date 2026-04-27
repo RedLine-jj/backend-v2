@@ -11,6 +11,8 @@ public interface SiteOptionRepository extends JpaRepository<SiteOption, Long> {
     List<SiteOption> findByModel_IdOrderByIdAsc(Long modelId);
 
     @Query("SELECT so FROM SiteOption so " +
+           "JOIN FETCH so.site " +
+           "JOIN FETCH so.model " +
            "WHERE (:siteId IS NULL OR so.site.id = :siteId) " +
            "AND (:modelId IS NULL OR so.model.id = :modelId) " +
            "AND (:inStock IS NULL OR so.inStock = :inStock) " +

@@ -36,12 +36,14 @@ public class SiteOptionService {
 
     @Transactional(readOnly = true)
     public List<SiteOptionLogResponse> getLogs(Long id) {
-        if (!siteOptionRepository.existsById(id)) {
-            throw new BusinessException(ErrorCode.SITE_OPTION_NOT_FOUND);
-        }
-        return siteOptionLogRepository.findBySiteOption_IdOrderByCreatedAtDesc(id)
+        List<SiteOptionLogResponse> logs = siteOptionLogRepository
+            .findBySiteOption_IdOrderByCreatedAtDesc(id)
             .stream()
             .map(SiteOptionLogResponse::from)
             .toList();
+        if (logs.isEmpty() && !siteOptionRepository.existsById(id)) {
+            throw new BusinessException(ErrorCode.SITE_OPTION_NOT_FOUND);
+        }
+        return logs;
     }
 }

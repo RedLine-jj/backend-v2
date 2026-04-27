@@ -120,18 +120,30 @@ class SiteOptionServiceTest {
 
     @Test
     void getLogs_없는id_SITE_OPTION_NOT_FOUND_예외() {
+        given(siteOptionLogRepository.findBySiteOption_IdOrderByCreatedAtDesc(999L))
+            .willReturn(List.of());
         given(siteOptionRepository.existsById(999L)).willReturn(false);
 
         assertThatThrownBy(() -> siteOptionService.getLogs(999L))
             .isInstanceOf(BusinessException.class)
             .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                 .isEqualTo(ErrorCode.SITE_OPTION_NOT_FOUND));
-
-        verify(siteOptionLogRepository, never()).findBySiteOption_IdOrderByCreatedAtDesc(any());
     }
 
     @Test
-    void getLogs_존재하면_최신순반환() {
+    void getLogs_존재하고_로그없으면_빈리스트반환() {
+        given(siteOptionLogRepository.findBySiteOption_IdOrderByCreatedAtDesc(1L))
+            .willReturn(List.of());
+        given(siteOptionRepository.existsById(1L)).willReturn(true);
+
+        List<SiteOptionLogResponse> result = siteOptionService.getLogs(1L);
+
+        assertThat(result).isEmpty();
+        verify(siteOptionRepository).existsById(1L);
+    }
+
+    @Test
+    void getLogs_로그있으면_existsById_미호출() {
         SiteOption siteOption = buildSiteOption(1L);
         SiteOptionLog log = SiteOptionLog.builder()
             .id(10L)
@@ -142,7 +154,6 @@ class SiteOptionServiceTest {
             .inStock(true)
             .build();
 
-        given(siteOptionRepository.existsById(1L)).willReturn(true);
         given(siteOptionLogRepository.findBySiteOption_IdOrderByCreatedAtDesc(1L))
             .willReturn(List.of(log));
 
@@ -151,6 +162,6 @@ class SiteOptionServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo(10L);
         assertThat(result.get(0).getPrice()).isEqualTo(89000);
-        verify(siteOptionLogRepository).findBySiteOption_IdOrderByCreatedAtDesc(1L);
+        verify(siteOptionRepository, never()).existsById(any());
     }
 }
