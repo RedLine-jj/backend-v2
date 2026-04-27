@@ -14,10 +14,10 @@ public class SiteOptionLog extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idx;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "site_option_idx", nullable = false)
+    @JoinColumn(name = "site_option_id", nullable = false)
     private SiteOption siteOption;
 
     @Column(name = "in_stock", nullable = false)

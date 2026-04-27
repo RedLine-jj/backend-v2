@@ -62,7 +62,7 @@ class ModelAliasRepositoryTest {
         modelAliasRepository.save(alias);
 
         Optional<ModelAlias> found = modelAliasRepository
-            .findBySite_IdxAndSiteModelName(site.getIdx(), "Levi's 501 Original");
+            .findBySite_IdAndSiteModelName(site.getId(), "Levi's 501 Original");
 
         assertThat(found).isPresent();
         assertThat(found.get().getConfidence()).isEqualTo(90);
@@ -71,7 +71,7 @@ class ModelAliasRepositoryTest {
     @Test
     void 존재하지_않는_siteModelName은_empty를_반환한다() {
         Optional<ModelAlias> found = modelAliasRepository
-            .findBySite_IdxAndSiteModelName(site.getIdx(), "없는상품");
+            .findBySite_IdAndSiteModelName(site.getId(), "없는상품");
 
         assertThat(found).isEmpty();
     }

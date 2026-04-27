@@ -57,8 +57,8 @@ class SubscriptionRepositoryTest {
     void userIdx와_modelIdx로_구독_존재_여부를_확인한다() {
         subscriptionRepository.save(Subscription.builder().user(user).model(model).build());
 
-        assertThat(subscriptionRepository.existsByUser_IdxAndModel_Idx(user.getIdx(), model.getIdx())).isTrue();
-        assertThat(subscriptionRepository.existsByUser_IdxAndModel_Idx(user.getIdx(), 999L)).isFalse();
+        assertThat(subscriptionRepository.existsByUser_IdAndModel_Id(user.getId(), model.getId())).isTrue();
+        assertThat(subscriptionRepository.existsByUser_IdAndModel_Id(user.getId(), 999L)).isFalse();
     }
 
     @Test

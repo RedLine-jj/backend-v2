@@ -7,7 +7,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "tb_model_alias",
-    uniqueConstraints = @UniqueConstraint(name = "uk_model_alias", columnNames = {"site_idx", "site_model_name"}))
+    uniqueConstraints = @UniqueConstraint(name = "uk_model_alias", columnNames = {"site_id", "site_model_name"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -16,14 +16,14 @@ public class ModelAlias extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idx;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "model_idx", nullable = false)
+    @JoinColumn(name = "model_id", nullable = false)
     private Model model;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "site_idx", nullable = false)
+    @JoinColumn(name = "site_id", nullable = false)
     private Site site;
 
     @Column(nullable = false)

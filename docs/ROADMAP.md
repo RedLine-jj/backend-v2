@@ -55,36 +55,36 @@
 
 **구현** (패키지: `com.redline.jj.domain`)
 
-모든 Entity: `BaseEntity` 상속, 테이블명 `tb_` 접두어, PK `idx` (AI BIGINT)
+모든 Entity: `BaseEntity` 상속, 테이블명 `tb_` 접두어, PK `id` (AI BIGINT)
 
-- [ ] `user/User.java` — tb_user, unique: `user_id`(String)
-- [ ] `user/UserRepository.java` — `findByUserId(String)`
-- [ ] `brand/Brand.java` — tb_brand, unique: `brand_name`
-- [ ] `brand/BrandRepository.java`
-- [ ] `brand/BrandAlias.java` — tb_brand_alias, unique: `(brand_idx, alias_name)`
-- [ ] `brand/BrandAliasRepository.java` — `findByAliasName(String)`
-- [ ] `site/Site.java` — tb_site, unique: `site_name`; enum: `platform` (CAFE24/IMWEB)
-- [ ] `site/SiteRepository.java`
-- [ ] `model/Model.java` — tb_model, unique: `(brand_idx, model_name)`; enum: `type` (DENIM_PANTS/DENIM_JACKET)
-- [ ] `model/ModelRepository.java` — 커서 페이지네이션 쿼리 메서드 포함
-- [ ] `model/ModelAlias.java` — tb_model_alias, unique: `(site_idx, site_model_name)`
-- [ ] `model/ModelAliasRepository.java` — `findBySiteIdxAndSiteModelName(Long, String)`
-- [ ] `option/SiteOption.java` — tb_site_option, unique: `(model_idx, site_idx, option_name)`; `updateSnapshot(boolean inStock, int price)` 메서드 (변경 여부 반환)
-- [ ] `option/SiteOptionRepository.java`
-- [ ] `option/SiteOptionLog.java` — tb_site_option_log (append-only)
-- [ ] `option/SiteOptionLogRepository.java`
-- [ ] `subscription/Subscription.java` — tb_subscription, unique: `(user_idx, model_idx)`
-- [ ] `subscription/SubscriptionRepository.java` — `existsAny()`, `findTop10ModelsBySubscriptionCount()`
-- [ ] `notification/RestockNotification.java` — tb_restock_notification; `isRead` boolean
-- [ ] `notification/RestockNotificationRepository.java` — `countByUserIdxAndIsReadFalse(Long)`
+- [x] `user/User.java` — tb_user, unique: `user_id`(String)
+- [x] `user/UserRepository.java` — `findByUserId(String)`
+- [x] `brand/Brand.java` — tb_brand, unique: `brand_name`
+- [x] `brand/BrandRepository.java`
+- [x] `brand/BrandAlias.java` — tb_brand_alias, unique: `(brand_idx, alias_name)`
+- [x] `brand/BrandAliasRepository.java` — `findByAliasName(String)`
+- [x] `site/Site.java` — tb_site, unique: `site_name`; enum: `platform` (CAFE24/IMWEB)
+- [x] `site/SiteRepository.java`
+- [x] `model/Model.java` — tb_model, unique: `(brand_idx, model_name)`; enum: `type` (DENIM_PANTS/DENIM_JACKET)
+- [x] `model/ModelRepository.java` — 커서 페이지네이션 쿼리 메서드 포함
+- [x] `model/ModelAlias.java` — tb_model_alias, unique: `(site_idx, site_model_name)`
+- [x] `model/ModelAliasRepository.java` — `findBySiteIdxAndSiteModelName(Long, String)`
+- [x] `option/SiteOption.java` — tb_site_option, unique: `(model_idx, site_idx, option_name)`; `updateSnapshot(boolean inStock, int price)` 메서드 (변경 여부 반환)
+- [x] `option/SiteOptionRepository.java`
+- [x] `option/SiteOptionLog.java` — tb_site_option_log (append-only)
+- [x] `option/SiteOptionLogRepository.java`
+- [x] `subscription/Subscription.java` — tb_subscription, unique: `(user_idx, model_idx)`
+- [x] `subscription/SubscriptionRepository.java` — `existsAny()`, `findTop10ModelsBySubscriptionCount()`
+- [x] `notification/RestockNotification.java` — tb_restock_notification; `isRead` boolean
+- [x] `notification/RestockNotificationRepository.java` — `countByUserIdxAndIsReadFalse(Long)`
 
 **통합 테스트** (`@DataJpaTest`, H2)
-- [ ] `UserRepositoryTest` — `findByUserId` 존재/미존재 케이스
-- [ ] `ModelAliasRepositoryTest` — `findBySiteIdxAndSiteModelName` 복합키 조회
-- [ ] `SubscriptionRepositoryTest`
+- [x] `UserRepositoryTest` — `findByUserId` 존재/미존재 케이스
+- [x] `ModelAliasRepositoryTest` — `findBySiteIdxAndSiteModelName` 복합키 조회
+- [x] `SubscriptionRepositoryTest`
   - `existsAny()`: 구독 있음 → true, 없음 → false
   - unique 제약: 동일 (user_idx, model_idx) insert 시 예외
-- [ ] `SiteOptionTest` (단위)
+- [x] `SiteOptionTest` (단위)
   - `updateSnapshot(false→true)`: 반환 true, status=true, price 갱신
   - `updateSnapshot(true→true)`: 반환 false, price 변동 없으면 그대로
   - `updateSnapshot(true→false)`: 반환 false (재입고 아님), status=false
@@ -92,9 +92,7 @@
   - `updateSnapshot(가격 변경만)`: 반환 false, price 갱신
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.domain...*"`
-- [ ] `./gradlew bootRun --args='--spring.profiles.active=local'` 기동 후 `ddl-auto:update`로 테이블 10개 생성 확인
-- [ ] `http://localhost:8080/actuator/health` — UP 확인
+- [x] `./gradlew test --tests "com.redline.jj.domain...*"`
 
 ---
 

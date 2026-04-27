@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface RestockNotificationRepository extends JpaRepository<RestockNotification, Long> {
 
-    long countByUser_IdxAndReadFalse(Long userIdx);
+    long countByUser_IdAndReadFalse(Long userId);
 
-    List<RestockNotification> findByUser_IdxOrderByCreatedAtDesc(Long userIdx);
+    List<RestockNotification> findByUser_IdOrderByCreatedAtDesc(Long userId);
 }

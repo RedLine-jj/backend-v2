@@ -8,7 +8,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "tb_subscription",
-    uniqueConstraints = @UniqueConstraint(name = "uk_subscription", columnNames = {"user_idx", "model_idx"}))
+    uniqueConstraints = @UniqueConstraint(name = "uk_subscription", columnNames = {"user_id", "model_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -17,13 +17,13 @@ public class Subscription extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idx;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_idx", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "model_idx", nullable = false)
+    @JoinColumn(name = "model_id", nullable = false)
     private Model model;
 }

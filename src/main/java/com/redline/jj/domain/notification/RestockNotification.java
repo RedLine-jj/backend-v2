@@ -16,14 +16,14 @@ public class RestockNotification extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idx;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_idx", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "model_idx", nullable = false)
+    @JoinColumn(name = "model_id", nullable = false)
     private Model model;
 
     @Column(name = "is_read", nullable = false)

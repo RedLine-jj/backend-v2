@@ -6,7 +6,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "tb_brand_alias",
-    uniqueConstraints = @UniqueConstraint(name = "uk_brand_alias", columnNames = {"brand_idx", "alias_name"}))
+    uniqueConstraints = @UniqueConstraint(name = "uk_brand_alias", columnNames = {"brand_id", "alias_name"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -15,10 +15,10 @@ public class BrandAlias extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idx;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "brand_idx", nullable = false)
+    @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 
     @Column(nullable = false)
