@@ -46,6 +46,9 @@ class JwtAuthenticationFilterTest {
     @MockitoBean
     private UserRepository userRepository;
 
+    @MockitoBean
+    private com.redline.jj.api.auth.AuthService authService;
+
     @TestConfiguration
     static class TestSecurityConfig {
 
