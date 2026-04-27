@@ -13,8 +13,6 @@ import lombok.*;
 @Builder
 public class Site extends BaseEntity {
 
-    public enum Platform { CAFE24, IMWEB }
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,7 +20,6 @@ public class Site extends BaseEntity {
     @Column(nullable = false)
     private String siteName;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Platform platform;
+    @Column
+    private String siteLink;
 }

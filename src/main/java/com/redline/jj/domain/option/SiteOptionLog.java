@@ -4,6 +4,8 @@ import com.redline.jj.domain.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "tb_site_option_log")
 @Getter
@@ -20,9 +22,15 @@ public class SiteOptionLog extends BaseEntity {
     @JoinColumn(name = "site_option_id", nullable = false)
     private SiteOption siteOption;
 
-    @Column(name = "in_stock", nullable = false)
-    private boolean inStock;
-
     @Column(nullable = false)
-    private int price;
+    private LocalDateTime capturedAt;
+
+    @Column(name = "option_label", nullable = false)
+    private String optionLabel;
+
+    @Column
+    private Integer price;
+
+    @Column(name = "status", nullable = false)
+    private boolean inStock;
 }
