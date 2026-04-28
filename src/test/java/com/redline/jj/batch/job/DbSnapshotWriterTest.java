@@ -129,7 +129,7 @@ class DbSnapshotWriterTest {
         when(siteOptionRepository.findBySite_IdAndModel_IdAndOptionLabel(any(), any(), any()))
             .thenReturn(Optional.empty());
         ArgumentCaptor<SiteOption> siteOptionCaptor = ArgumentCaptor.forClass(SiteOption.class);
-        when(siteOptionRepository.save(siteOptionCaptor.capture())).thenAnswer(i -> i.getArgument(0));
+        when(siteOptionRepository.saveAndFlush(siteOptionCaptor.capture())).thenAnswer(i -> i.getArgument(0));
 
         writer.write(buildChunk(buildResolvedItem(true, 89000)));
 
@@ -142,7 +142,7 @@ class DbSnapshotWriterTest {
     void write_신규SiteOption_재고없음_Log0건() throws Exception {
         when(siteOptionRepository.findBySite_IdAndModel_IdAndOptionLabel(any(), any(), any()))
             .thenReturn(Optional.empty());
-        when(siteOptionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(siteOptionRepository.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
 
         writer.write(buildChunk(buildResolvedItem(false, 89000)));
 
@@ -310,7 +310,7 @@ class DbSnapshotWriterTest {
         // given - 기존 SiteOption 없음
         when(siteOptionRepository.findBySite_IdAndModel_IdAndOptionLabel(any(), any(), any()))
             .thenReturn(Optional.empty());
-        when(siteOptionRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(siteOptionRepository.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
 
         // when
         writer.write(buildChunk(buildResolvedItem(true, 89000)));

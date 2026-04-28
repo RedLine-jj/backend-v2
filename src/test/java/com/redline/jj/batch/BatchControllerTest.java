@@ -142,7 +142,7 @@ class BatchControllerTest {
         mockMvc.perform(post("/api/batch/crawl/invalidSite"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.success").value(false))
-            .andExpect(jsonPath("$.code").value("E400"));
+            .andExpect(jsonPath("$.code").value("C003"));
     }
 
     // -----------------------------------------------------------------------
@@ -156,7 +156,7 @@ class BatchControllerTest {
         mockMvc.perform(post("/api/batch/crawl/" + invalidSite))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.success").value(false))
-            .andExpect(jsonPath("$.code").value("E400"));
+            .andExpect(jsonPath("$.code").value("C003"));
     }
 
     @Test
@@ -182,7 +182,7 @@ class BatchControllerTest {
     // -----------------------------------------------------------------------
 
     @Test
-    @DisplayName("JobExecutionAlreadyRunningException 발생 시 500 반환, success=false, code=C002")
+    @DisplayName("JobExecutionAlreadyRunningException 발생 시 500 반환, success=false, code=C004")
     void trigger_JobExecutionException_500반환() throws Exception {
         // JobLauncher.run()이 선언하는 checked exception 중 JobExecutionException 서브클래스 사용
         willThrow(new JobExecutionAlreadyRunningException("already running"))
@@ -191,7 +191,7 @@ class BatchControllerTest {
         mockMvc.perform(post("/api/batch/crawl/modeMan"))
             .andExpect(status().isInternalServerError())
             .andExpect(jsonPath("$.success").value(false))
-            .andExpect(jsonPath("$.code").value("C002"));
+            .andExpect(jsonPath("$.code").value("C004"));
     }
 
     @Test
