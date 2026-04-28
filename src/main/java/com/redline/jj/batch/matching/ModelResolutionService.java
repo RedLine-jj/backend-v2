@@ -8,7 +8,6 @@ import com.redline.jj.domain.model.Model;
 import com.redline.jj.domain.model.ModelAlias;
 import com.redline.jj.domain.model.ModelAliasRepository;
 import com.redline.jj.domain.model.ModelRepository;
-import com.redline.jj.domain.site.Site;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,7 @@ public class ModelResolutionService {
     private final LlmMatchClient llmMatchClient;
 
     @Transactional
-    public Model resolve(CrawledProduct product, Site site) {
+    public Model resolve(CrawledProduct product) {
         String normalizedBrand = brandAliasRepository.findByAliasName(product.brandName())
                 .map(alias -> alias.getBrand().getBrandName())
                 .orElse(product.brandName());
@@ -39,15 +38,15 @@ public class ModelResolutionService {
             return exactMatch.get();
         }
 
-        Optional<ModelAlias> aliasMatch = modelAliasRepository.findBySiteAndAliasName(site, product.siteModelName());
+        Optional<ModelAlias> aliasMatch = modelAliasRepository.findByAliasName(product.siteModelName());
         if (aliasMatch.isPresent()) {
             return aliasMatch.get().getModel();
         }
 
-        return resolveByLlm(product, site, normalizedBrand);
+        return resolveByLlm(product, normalizedBrand);
     }
 
-    private Model resolveByLlm(CrawledProduct product, Site site, String normalizedBrand) {
+    private Model resolveByLlm(CrawledProduct product, String normalizedBrand) {
         Optional<LlmMatchResult> llmResult = llmMatchClient.match(product);
 
         if (llmResult.isEmpty()) {
@@ -59,7 +58,7 @@ public class ModelResolutionService {
                     result.brandName(), result.modelName());
 
             if (matched.isPresent()) {
-                saveAliasIfAbsent(site, product.siteModelName(), matched.get());
+                saveAliasIfAbsent(product.siteModelName(), matched.get());
                 return matched.get();
             }
 
@@ -72,7 +71,7 @@ public class ModelResolutionService {
                 .brand(brand)
                 .modelName(product.modelName())
                 .build());
-        saveAliasIfAbsent(site, product.siteModelName(), saved);
+        saveAliasIfAbsent(product.siteModelName(), saved);
         log.warn("신규 Model 자동 생성: brand={}, model={}", brand.getBrandName(), saved.getModelName());
         return saved;
     }
@@ -85,11 +84,10 @@ public class ModelResolutionService {
                 });
     }
 
-    private void saveAliasIfAbsent(Site site, String siteModelName, Model model) {
-        if (modelAliasRepository.findBySiteAndAliasName(site, siteModelName).isEmpty()) {
+    private void saveAliasIfAbsent(String siteModelName, Model model) {
+        if (modelAliasRepository.findByAliasName(siteModelName).isEmpty()) {
             modelAliasRepository.save(ModelAlias.builder()
                     .model(model)
-                    .site(site)
                     .aliasName(siteModelName)
                     .build());
         }

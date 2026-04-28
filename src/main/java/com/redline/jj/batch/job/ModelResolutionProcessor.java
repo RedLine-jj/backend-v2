@@ -34,7 +34,7 @@ public class ModelResolutionProcessor implements ItemProcessor<String, ResolvedI
     public ResolvedItem process(String url) {
         CrawledProduct product = detailParser.parse(url);
         Site site = resolveSite();
-        Model model = modelResolutionService.resolve(product, site);
+        Model model = modelResolutionService.resolve(product);
         return new ResolvedItem(
             model, site, product.optionLabel(), product.price(),
             product.inStock(), url, product.siteModelName()
