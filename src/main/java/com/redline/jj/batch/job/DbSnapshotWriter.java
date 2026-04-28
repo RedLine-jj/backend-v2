@@ -56,6 +56,7 @@ public class DbSnapshotWriter implements ItemWriter<ResolvedItem> {
         Integer oldPrice = siteOption.getPrice();
 
         boolean isRestock = siteOption.updateSnapshot(item.inStock(), item.price());
+        siteOption.updateUrl(item.url());
         siteOption.updateLastCapturedAt(LocalDateTime.now(clock));
 
         boolean changed = (oldInStock != item.inStock())
