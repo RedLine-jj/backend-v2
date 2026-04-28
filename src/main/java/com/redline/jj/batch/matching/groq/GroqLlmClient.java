@@ -52,7 +52,7 @@ public class GroqLlmClient implements LlmMatchClient {
 
     @Override
     public Optional<LlmMatchResult> match(CrawledProduct product) {
-        LlmMatchResult llmResult = callGroqApi(product.brandName(), product.modelName());
+        LlmMatchResult llmResult = callGroqApi(product.brandName(), product.siteModelName());
 
         if (llmResult.confidence() < confidenceThreshold) {
             log.debug("LLM confidence {:.1f} < {} — no match for product: {}",

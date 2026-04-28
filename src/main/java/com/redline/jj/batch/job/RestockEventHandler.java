@@ -5,6 +5,7 @@ import com.redline.jj.domain.notification.RestockNotificationRepository;
 import com.redline.jj.domain.subscription.Subscription;
 import com.redline.jj.domain.subscription.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -13,6 +14,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RestockEventHandler {
@@ -33,12 +35,17 @@ public class RestockEventHandler {
                     .build()
             );
 
-            redisTemplate.convertAndSend("restock", Map.of(
-                "userId", subscription.getUser().getId(),
-                "modelId", event.modelId(),
-                "modelName", event.modelName(),
-                "brandName", event.brandName()
-            ));
+            try {
+                redisTemplate.convertAndSend("restock", Map.of(
+                    "userId", subscription.getUser().getId(),
+                    "modelId", event.modelId(),
+                    "modelName", event.modelName(),
+                    "brandName", event.brandName()
+                ));
+            } catch (Exception e) {
+                log.warn("Redis 재입고 알림 전송 실패 — userId={}, modelId={}",
+                    subscription.getUser().getId(), event.modelId(), e);
+            }
         }
     }
 }
