@@ -1,5 +1,6 @@
 package com.redline.jj.batch;
 
+import com.redline.jj.common.exception.BusinessException;
 import com.redline.jj.common.exception.ErrorCode;
 import com.redline.jj.common.response.ApiResponse;
 import org.springframework.batch.core.Job;
@@ -7,7 +8,6 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.JobExecutionException;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,13 +36,11 @@ public class BatchController {
     }
 
     @PostMapping("/{site}")
-    public ResponseEntity<ApiResponse<Void>> trigger(@PathVariable String site) {
+    public ApiResponse<Void> trigger(@PathVariable String site) {
         Job job = crawlingJobMap.get(site + JOB_NAME_SUFFIX);
 
         if (job == null) {
-            return ResponseEntity
-                .badRequest()
-                .body(ApiResponse.fail("E400", "지원하지 않는 사이트입니다: " + site));
+            throw new BusinessException(ErrorCode.UNSUPPORTED_SITE);
         }
 
         try {
@@ -50,11 +48,9 @@ public class BatchController {
                 .addLocalDateTime("triggeredAt", LocalDateTime.now(clock))
                 .toJobParameters();
             jobLauncher.run(job, params);
-            return ResponseEntity.ok(ApiResponse.ok());
+            return ApiResponse.ok();
         } catch (JobExecutionException e) {
-            return ResponseEntity
-                .internalServerError()
-                .body(ApiResponse.fail(ErrorCode.CRAWLING_FAILED));
+            throw new BusinessException(ErrorCode.LAUNCH_FAILURE);
         }
     }
 }
