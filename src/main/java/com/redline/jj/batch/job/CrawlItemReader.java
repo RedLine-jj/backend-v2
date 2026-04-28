@@ -21,10 +21,11 @@ public class CrawlItemReader implements ItemReader<String> {
     @Override
     public String read() {
         if (urlQueue.isEmpty() && !exhausted) {
-            List<String> urls = listParser.parseProductUrls(currentPage++);
+            List<String> urls = listParser.parseProductUrls(currentPage);
             if (urls.isEmpty()) {
                 exhausted = true;
             } else {
+                currentPage++;
                 urlQueue.addAll(urls);
             }
         }
