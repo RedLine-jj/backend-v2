@@ -41,4 +41,11 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
         LIMIT 10
         """)
     List<ModelSubscriptionCount> findTop10ModelsBySubscriptionCount();
+
+    @Query("""
+        SELECT s FROM Subscription s
+        JOIN FETCH s.user
+        WHERE s.model.id = :modelId
+        """)
+    List<Subscription> findByModel_Id(@Param("modelId") Long modelId);
 }

@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "tb_site_option",
@@ -51,5 +52,13 @@ public class SiteOption extends BaseEntity {
         this.inStock = newInStock;
         this.price = newPrice;
         return isRestock;
+    }
+
+    public void updateLastCapturedAt(LocalDateTime time) {
+        this.lastCapturedAt = Objects.requireNonNull(time, "lastCapturedAt must not be null");
+    }
+
+    public void updateUrl(String url) {
+        this.url = Objects.requireNonNull(url, "url must not be null");
     }
 }

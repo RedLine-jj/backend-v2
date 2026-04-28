@@ -14,7 +14,7 @@ class ErrorCodeTest {
 
     @Test
     void ErrorCode_총_개수는_18개다() {
-        assertThat(ErrorCode.values()).hasSize(18);
+        assertThat(ErrorCode.values()).hasSize(21);
     }
 
     @EnumSource(ErrorCode.class)

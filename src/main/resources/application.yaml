@@ -36,3 +36,10 @@ jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: 1800000
   refresh-token-expiration: 604800000
+
+groq:
+  api-key: ${GROQ_API_KEY}
+  base-url: ${GROQ_BASE_URL:https://api.groq.com/openai/v1/chat/completions}
+  model: llama3-8b-8192
+  confidence-threshold: 85.0
+  prompt: "다음 상품이 기존 DB의 어떤 모델과 매칭되는지 알려주세요. 브랜드: {brandHint}, 상품명: {siteModelName}. JSON 형식으로 응답: {\"brandName\": \"<string>\", \"modelName\": \"<string>\", \"confidence\": <0-100>}"

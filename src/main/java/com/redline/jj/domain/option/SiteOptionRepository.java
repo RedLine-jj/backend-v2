@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SiteOptionRepository extends JpaRepository<SiteOption, Long> {
 
@@ -20,4 +21,6 @@ public interface SiteOptionRepository extends JpaRepository<SiteOption, Long> {
     List<SiteOption> search(@Param("siteId") Long siteId,
                             @Param("modelId") Long modelId,
                             @Param("inStock") Boolean inStock);
+
+    Optional<SiteOption> findBySite_IdAndModel_IdAndOptionLabel(Long siteId, Long modelId, String optionLabel);
 }
