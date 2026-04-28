@@ -77,6 +77,9 @@ dependencies {
 
     // MockWebServer
     testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+
+    // Spring Batch Test
+    testImplementation 'org.springframework.batch:spring-batch-test'
 }
 
 tasks.named('test') {

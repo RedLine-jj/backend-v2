@@ -52,4 +52,8 @@ public class SiteOption extends BaseEntity {
         this.price = newPrice;
         return isRestock;
     }
+
+    public void updateLastCapturedAt(LocalDateTime time) {
+        this.lastCapturedAt = time;
+    }
 }
