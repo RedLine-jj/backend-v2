@@ -72,6 +72,7 @@ public class ModelResolutionService {
                 .brand(brand)
                 .modelName(product.modelName())
                 .build());
+        saveAliasIfAbsent(site, product.siteModelName(), saved);
         log.warn("신규 Model 자동 생성: brand={}, model={}", brand.getBrandName(), saved.getModelName());
         return saved;
     }

@@ -78,7 +78,7 @@ public class DbSnapshotWriter implements ItemWriter<ResolvedItem> {
 
     private void createNew(ResolvedItem item) {
         try {
-            SiteOption newOption = siteOptionRepository.save(
+            SiteOption newOption = siteOptionRepository.saveAndFlush(
                 SiteOption.builder()
                     .site(item.site())
                     .model(item.model())

@@ -13,6 +13,7 @@ import com.redline.jj.domain.site.SiteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
@@ -135,12 +136,14 @@ public class CrawlingJobConfig {
     private Step buildStep(SiteDescriptor site, ItemReader<String> reader,
                            ItemProcessor<String, ResolvedItem> processor) {
         return new StepBuilder(site.stepBeanName(), jobRepository)
-            .<String, ResolvedItem>chunk(50, transactionManager)
+            .<String, ResolvedItem>chunk(10, transactionManager)
             .reader(reader)
             .processor(processor)
             .writer(dbSnapshotWriter)
             .faultTolerant()
             .skipPolicy(new CrawlingSkipPolicy())
+            .retryLimit(3)
+            .retry(WebClientRequestException.class)
             .build();
     }
 
