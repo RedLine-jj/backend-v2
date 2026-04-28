@@ -8,6 +8,7 @@ import com.redline.jj.domain.option.SiteOptionRepository;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
@@ -76,20 +77,28 @@ public class DbSnapshotWriter implements ItemWriter<ResolvedItem> {
     }
 
     private void createNew(ResolvedItem item) {
-        SiteOption newOption = siteOptionRepository.save(
-            SiteOption.builder()
-                .site(item.site())
-                .model(item.model())
-                .optionLabel(item.optionLabel())
-                .url(item.url())
-                .inStock(item.inStock())
-                .price(item.price())
-                .lastCapturedAt(LocalDateTime.now(clock))
-                .build()
-        );
+        try {
+            SiteOption newOption = siteOptionRepository.save(
+                SiteOption.builder()
+                    .site(item.site())
+                    .model(item.model())
+                    .optionLabel(item.optionLabel())
+                    .url(item.url())
+                    .inStock(item.inStock())
+                    .price(item.price())
+                    .lastCapturedAt(LocalDateTime.now(clock))
+                    .build()
+            );
 
-        if (item.inStock()) {
-            siteOptionLogRepository.save(buildLog(newOption, item));
+            if (item.inStock()) {
+                siteOptionLogRepository.save(buildLog(newOption, item));
+            }
+        } catch (DataIntegrityViolationException e) {
+            // Race condition: another thread inserted the same (site_id, model_id, option_label) → retry as update
+            siteOptionRepository
+                .findBySite_IdAndModel_IdAndOptionLabel(
+                    item.site().getId(), item.model().getId(), item.optionLabel())
+                .ifPresent(existing -> updateExisting(existing, item));
         }
     }
 

@@ -33,8 +33,8 @@ public class ModelResolutionProcessor implements ItemProcessor<String, ResolvedI
     @Override
     public ResolvedItem process(String url) {
         CrawledProduct product = detailParser.parse(url);
-        Model model = modelResolutionService.resolve(product);
         Site site = resolveSite();
+        Model model = modelResolutionService.resolve(product, site);
         return new ResolvedItem(
             model, site, product.optionLabel(), product.price(),
             product.inStock(), url, product.siteModelName()
