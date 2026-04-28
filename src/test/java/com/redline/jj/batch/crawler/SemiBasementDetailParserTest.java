@@ -3,6 +3,7 @@ package com.redline.jj.batch.crawler;
 import com.redline.jj.batch.crawler.dto.CrawledProduct;
 import com.redline.jj.batch.crawler.semibasement.SemiBasementDetailParser;
 import com.redline.jj.common.exception.BusinessException;
+import com.redline.jj.common.exception.ErrorCode;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -14,7 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SemiBasementDetailParserTest {
 
@@ -68,6 +69,9 @@ class SemiBasementDetailParserTest {
     void parse_5xx응답_BusinessException발생() {
         server.enqueue(new MockResponse().setResponseCode(500));
         String url = server.url("/api/v1/products/P001").toString();
-        assertThrows(BusinessException.class, () -> parser.parse(url));
+        assertThatThrownBy(() -> parser.parse(url))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getErrorCode())
+                        .isEqualTo(ErrorCode.CRAWLING_FAILED));
     }
 }

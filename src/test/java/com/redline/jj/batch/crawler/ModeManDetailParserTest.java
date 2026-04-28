@@ -3,6 +3,7 @@ package com.redline.jj.batch.crawler;
 import com.redline.jj.batch.crawler.dto.CrawledProduct;
 import com.redline.jj.batch.crawler.modeman.ModeManDetailParser;
 import com.redline.jj.common.exception.BusinessException;
+import com.redline.jj.common.exception.ErrorCode;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -90,6 +91,8 @@ class ModeManDetailParserTest {
         String url = server.url("/product/detail.html?no=3").toString();
 
         assertThatThrownBy(() -> parser.parse(url))
-                .isInstanceOf(BusinessException.class);
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getErrorCode())
+                        .isEqualTo(ErrorCode.CRAWLING_FAILED));
     }
 }
