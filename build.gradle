@@ -62,6 +62,9 @@ dependencies {
     // Bucket4j
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
 
+    // dotenv (.env 파일 로드)
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'

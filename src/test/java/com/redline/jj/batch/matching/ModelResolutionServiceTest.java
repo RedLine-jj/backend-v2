@@ -9,7 +9,6 @@ import com.redline.jj.domain.model.Model;
 import com.redline.jj.domain.model.ModelAlias;
 import com.redline.jj.domain.model.ModelAliasRepository;
 import com.redline.jj.domain.model.ModelRepository;
-import com.redline.jj.domain.site.Site;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,8 +39,6 @@ class ModelResolutionServiceTest {
     BrandRepository brandRepository;
     @Mock
     LlmMatchClient llmMatchClient;
-    @Mock
-    Site site;
 
     private ModelResolutionService service;
 
@@ -66,10 +63,10 @@ class ModelResolutionServiceTest {
         when(modelRepository.findByBrand_BrandNameAndModelName("모드만", "101 슬림 데님"))
                 .thenReturn(Optional.of(model));
 
-        Model result = service.resolve(buildProduct("모드만", "101 슬림 데님", "101 슬림 데님"), site);
+        Model result = service.resolve(buildProduct("모드만", "101 슬림 데님", "101 슬림 데님"));
 
         assertThat(result).isEqualTo(model);
-        verify(modelAliasRepository, never()).findBySiteAndAliasName(any(), any());
+        verify(modelAliasRepository, never()).findByAliasName(any());
         verify(llmMatchClient, never()).match(any());
     }
 
@@ -77,12 +74,12 @@ class ModelResolutionServiceTest {
     @DisplayName("Alias 캐시 히트 시 LLM 미호출")
     void resolve_AliasHit_LLM미호출() {
         Model model = buildModel(2L, "모드만", "101 슬림");
-        ModelAlias alias = ModelAlias.builder().model(model).site(site).aliasName("모드만101").build();
+        ModelAlias alias = ModelAlias.builder().model(model).aliasName("모드만101").build();
         when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
-        when(modelAliasRepository.findBySiteAndAliasName(site, "모드만101")).thenReturn(Optional.of(alias));
+        when(modelAliasRepository.findByAliasName("모드만101")).thenReturn(Optional.of(alias));
 
-        Model result = service.resolve(buildProduct("모드만", "101 슬림 데님", "모드만101"), site);
+        Model result = service.resolve(buildProduct("모드만", "101 슬림 데님", "모드만101"));
 
         assertThat(result.getId()).isEqualTo(2L);
         verify(llmMatchClient, never()).match(any());
@@ -96,12 +93,12 @@ class ModelResolutionServiceTest {
         when(modelRepository.findByBrand_BrandNameAndModelName("모드만", "501 데님"))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(matched));
-        when(modelAliasRepository.findBySiteAndAliasName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(llmMatchClient.match(any()))
                 .thenReturn(Optional.of(new LlmMatchResult("모드만", "501 데님", 90.0)));
         when(modelAliasRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Model result = service.resolve(buildProduct("모드만", "501 데님", "모드만501"), site);
+        Model result = service.resolve(buildProduct("모드만", "501 데님", "모드만501"));
 
         assertThat(result.getId()).isEqualTo(3L);
         verify(modelAliasRepository, times(1)).save(any(ModelAlias.class));
@@ -113,14 +110,14 @@ class ModelResolutionServiceTest {
     void resolve_LLM매칭실패_신규Model저장() {
         when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
-        when(modelAliasRepository.findBySiteAndAliasName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(llmMatchClient.match(any())).thenReturn(Optional.empty());
         Brand brand = Brand.builder().brandName("모드만").build();
         when(brandRepository.findByBrandName("모드만")).thenReturn(Optional.of(brand));
         Model newModel = buildModel(99L, "모드만", "신규모델");
         when(modelRepository.save(any())).thenReturn(newModel);
 
-        Model result = service.resolve(buildProduct("모드만", "신규모델", "신규모델사이트명"), site);
+        Model result = service.resolve(buildProduct("모드만", "신규모델", "신규모델사이트명"));
 
         verify(modelRepository, times(1)).save(any(Model.class));
         assertThat(result.getId()).isEqualTo(99L);
@@ -136,7 +133,7 @@ class ModelResolutionServiceTest {
         when(modelRepository.findByBrand_BrandNameAndModelName("모드만", "101 슬림"))
                 .thenReturn(Optional.of(model));
 
-        Model result = service.resolve(buildProduct("ModeMAN", "101 슬림", "101 슬림"), site);
+        Model result = service.resolve(buildProduct("ModeMAN", "101 슬림", "101 슬림"));
 
         assertThat(result.getId()).isEqualTo(5L);
         verify(modelRepository).findByBrand_BrandNameAndModelName("모드만", "101 슬림");
@@ -151,7 +148,7 @@ class ModelResolutionServiceTest {
     void resolve_신규Brand생성경로_warnLog발생(CapturedOutput output) {
         when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
-        when(modelAliasRepository.findBySiteAndAliasName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(llmMatchClient.match(any())).thenReturn(Optional.empty());
         Brand newBrand = Brand.builder().brandName("신규브랜드").build();
         when(brandRepository.findByBrandName("신규브랜드")).thenReturn(Optional.empty());
@@ -159,7 +156,7 @@ class ModelResolutionServiceTest {
         Model newModel = buildModel(100L, "신규브랜드", "신규모델");
         when(modelRepository.save(any())).thenReturn(newModel);
 
-        service.resolve(buildProduct("신규브랜드", "신규모델", "신규모델사이트명"), site);
+        service.resolve(buildProduct("신규브랜드", "신규모델", "신규모델사이트명"));
 
         assertThat(output.getAll()).contains("신규 Brand 자동 생성");
         assertThat(output.getAll()).contains("신규브랜드");
@@ -170,14 +167,14 @@ class ModelResolutionServiceTest {
     void resolve_LLMEmpty_신규Model생성_warnLog발생(CapturedOutput output) {
         when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
-        when(modelAliasRepository.findBySiteAndAliasName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(llmMatchClient.match(any())).thenReturn(Optional.empty());
         Brand brand = Brand.builder().brandName("모드만").build();
         when(brandRepository.findByBrandName("모드만")).thenReturn(Optional.of(brand));
         Model newModel = buildModel(101L, "모드만", "미지모델");
         when(modelRepository.save(any())).thenReturn(newModel);
 
-        service.resolve(buildProduct("모드만", "미지모델", "미지모델사이트명"), site);
+        service.resolve(buildProduct("모드만", "미지모델", "미지모델사이트명"));
 
         assertThat(output.getAll()).contains("신규 Model 자동 생성");
         assertThat(output.getAll()).contains("미지모델");
@@ -188,7 +185,7 @@ class ModelResolutionServiceTest {
     void resolve_LLM결과있지만DB미매칭_warnLog발생(CapturedOutput output) {
         when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
-        when(modelAliasRepository.findBySiteAndAliasName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(llmMatchClient.match(any()))
                 .thenReturn(Optional.of(new LlmMatchResult("모드만", "존재하지않는모델", 88.0)));
         Brand brand = Brand.builder().brandName("모드만").build();
@@ -196,7 +193,7 @@ class ModelResolutionServiceTest {
         Model newModel = buildModel(102L, "모드만", "존재하지않는모델");
         when(modelRepository.save(any())).thenReturn(newModel);
 
-        service.resolve(buildProduct("모드만", "존재하지않는모델", "모드만미지모델"), site);
+        service.resolve(buildProduct("모드만", "존재하지않는모델", "모드만미지모델"));
 
         assertThat(output.getAll()).contains("LLM 매칭 실패(DB 미매칭)");
     }
@@ -213,15 +210,14 @@ class ModelResolutionServiceTest {
         when(modelRepository.findByBrand_BrandNameAndModelName("모드만", "501 데님"))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(matched));
-        ModelAlias existingAlias = ModelAlias.builder().model(matched).site(site).aliasName("모드만501").build();
-        // 호출 순서: 1) alias 캐시 조회(empty) → LLM 진입, 2) saveAliasIfAbsent 조회(present) → save 미호출
-        when(modelAliasRepository.findBySiteAndAliasName(site, "모드만501"))
+        ModelAlias existingAlias = ModelAlias.builder().model(matched).aliasName("모드만501").build();
+        when(modelAliasRepository.findByAliasName("모드만501"))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(existingAlias));
         when(llmMatchClient.match(any()))
                 .thenReturn(Optional.of(new LlmMatchResult("모드만", "501 데님", 92.0)));
 
-        Model result = service.resolve(buildProduct("모드만", "501 데님", "모드만501"), site);
+        Model result = service.resolve(buildProduct("모드만", "501 데님", "모드만501"));
 
         assertThat(result.getId()).isEqualTo(3L);
         verify(modelAliasRepository, never()).save(any(ModelAlias.class));
@@ -235,13 +231,13 @@ class ModelResolutionServiceTest {
         when(modelRepository.findByBrand_BrandNameAndModelName("모드만", "501 데님"))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(matched));
-        when(modelAliasRepository.findBySiteAndAliasName(site, "모드만-501")).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName("모드만-501")).thenReturn(Optional.empty());
         when(llmMatchClient.match(any()))
                 .thenReturn(Optional.of(new LlmMatchResult("모드만", "501 데님", 92.0)));
         ArgumentCaptor<ModelAlias> aliasCaptor = ArgumentCaptor.forClass(ModelAlias.class);
         when(modelAliasRepository.save(aliasCaptor.capture())).thenAnswer(i -> i.getArgument(0));
 
-        service.resolve(buildProduct("모드만", "501 데님", "모드만-501"), site);
+        service.resolve(buildProduct("모드만", "501 데님", "모드만-501"));
 
         assertThat(aliasCaptor.getValue().getAliasName()).isEqualTo("모드만-501");
         assertThat(aliasCaptor.getValue().getModel().getId()).isEqualTo(3L);
@@ -256,7 +252,7 @@ class ModelResolutionServiceTest {
     void resolve_신규Brand_BrandRepositorySave1회호출() {
         when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
-        when(modelAliasRepository.findBySiteAndAliasName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(llmMatchClient.match(any())).thenReturn(Optional.empty());
         when(brandRepository.findByBrandName("없는브랜드")).thenReturn(Optional.empty());
         Brand savedBrand = Brand.builder().brandName("없는브랜드").build();
@@ -264,7 +260,7 @@ class ModelResolutionServiceTest {
         Model newModel = buildModel(200L, "없는브랜드", "새모델");
         when(modelRepository.save(any())).thenReturn(newModel);
 
-        service.resolve(buildProduct("없는브랜드", "새모델", "새모델사이트"), site);
+        service.resolve(buildProduct("없는브랜드", "새모델", "새모델사이트"));
 
         ArgumentCaptor<Brand> brandCaptor = ArgumentCaptor.forClass(Brand.class);
         verify(brandRepository, times(1)).save(brandCaptor.capture());
@@ -276,14 +272,14 @@ class ModelResolutionServiceTest {
     void resolve_기존Brand존재_BrandRepositorySave미호출() {
         when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
-        when(modelAliasRepository.findBySiteAndAliasName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
         when(llmMatchClient.match(any())).thenReturn(Optional.empty());
         Brand existingBrand = Brand.builder().brandName("모드만").build();
         when(brandRepository.findByBrandName("모드만")).thenReturn(Optional.of(existingBrand));
         Model newModel = buildModel(201L, "모드만", "새모델");
         when(modelRepository.save(any())).thenReturn(newModel);
 
-        service.resolve(buildProduct("모드만", "새모델", "새모델사이트"), site);
+        service.resolve(buildProduct("모드만", "새모델", "새모델사이트"));
 
         verify(brandRepository, never()).save(any());
     }

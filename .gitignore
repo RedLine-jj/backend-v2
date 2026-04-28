@@ -52,3 +52,5 @@ logs/
 .claude/
 shrimp-rules.md
 shrimp_data/
+
+.env
