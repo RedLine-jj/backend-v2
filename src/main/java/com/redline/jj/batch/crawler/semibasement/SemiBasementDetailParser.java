@@ -17,20 +17,27 @@ import java.time.Duration;
 public class SemiBasementDetailParser implements DetailParser {
 
     private final WebClient webClient;
+    private final String baseUrl;
 
     public SemiBasementDetailParser(
         WebClient.Builder webClientBuilder,
         @Value("${crawler.semibasement.base-url}") String baseUrl
     ) {
+        this.baseUrl = baseUrl;
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
     }
 
     @Override
     public CrawledProduct parse(String url) throws BusinessException {
+        if (!url.startsWith(baseUrl)) {
+            throw new BusinessException(ErrorCode.CRAWLING_FAILED);
+        }
+        String relativePath = url.substring(baseUrl.length());
+
         SemiBasementProductResponse response;
         try {
             response = webClient.get()
-                .uri(url)
+                .uri(uriBuilder -> uriBuilder.path(relativePath).build())
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, clientResponse ->
                     Mono.error(new BusinessException(ErrorCode.CRAWLING_FAILED)))

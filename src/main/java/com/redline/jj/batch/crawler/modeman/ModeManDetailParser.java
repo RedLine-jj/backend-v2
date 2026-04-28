@@ -19,6 +19,7 @@ public class ModeManDetailParser implements DetailParser {
         try {
             Document doc = Jsoup.connect(url)
                     .userAgent("Mozilla/5.0")
+                    .timeout(10_000)
                     .get();
 
             String brandName = extractRequiredText(doc, "div.brand a");
@@ -56,6 +57,13 @@ public class ModeManDetailParser implements DetailParser {
             return null;
         }
         String digits = priceEl.text().replaceAll("[^0-9]", "");
-        return digits.isEmpty() ? null : Integer.parseInt(digits);
+        if (digits.isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(digits);
+        } catch (NumberFormatException e) {
+            throw new BusinessException(ErrorCode.CRAWLING_FAILED);
+        }
     }
 }

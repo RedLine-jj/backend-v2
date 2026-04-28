@@ -54,6 +54,7 @@ public class SemiBasementListParser implements ListParser {
 
         return response.data().stream()
             .map(SemiBasementProductListResponse.SemiBasementProductItem::productUrl)
+            .filter(u -> u != null && !u.trim().isBlank())
             .toList();
     }
 }

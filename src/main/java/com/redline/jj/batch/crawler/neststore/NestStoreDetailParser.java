@@ -19,6 +19,7 @@ public class NestStoreDetailParser implements DetailParser {
         try {
             Document doc = Jsoup.connect(url)
                 .userAgent("Mozilla/5.0")
+                .timeout(10_000)
                 .get();
 
             Element brandEl = doc.selectFirst("div.xans-product-detail .brand span");
@@ -26,12 +27,18 @@ public class NestStoreDetailParser implements DetailParser {
                 throw new BusinessException(ErrorCode.CRAWLING_FAILED);
             }
             String brandName = brandEl.text();
+            if (brandName.isBlank()) {
+                throw new BusinessException(ErrorCode.CRAWLING_FAILED);
+            }
 
             Element modelEl = doc.selectFirst("div.headingArea h2");
             if (modelEl == null) {
                 throw new BusinessException(ErrorCode.CRAWLING_FAILED);
             }
             String modelName = modelEl.text();
+            if (modelName.isBlank()) {
+                throw new BusinessException(ErrorCode.CRAWLING_FAILED);
+            }
 
             String siteModelName = modelName;
 
@@ -43,7 +50,11 @@ public class NestStoreDetailParser implements DetailParser {
             if (priceEl != null) {
                 String digits = priceEl.text().replaceAll("[^0-9]", "");
                 if (!digits.isBlank()) {
-                    price = Integer.parseInt(digits);
+                    try {
+                        price = Integer.parseInt(digits);
+                    } catch (NumberFormatException e) {
+                        throw new BusinessException(ErrorCode.CRAWLING_FAILED);
+                    }
                 }
             }
 

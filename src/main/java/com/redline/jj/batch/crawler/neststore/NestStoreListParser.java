@@ -27,6 +27,7 @@ public class NestStoreListParser implements ListParser {
         try {
             Document doc = Jsoup.connect(baseUrl + "/product/list.html?page=" + page)
                 .userAgent("Mozilla/5.0")
+                .timeout(10_000)
                 .get();
 
             Elements links = doc.select("#prdList li a.name");
