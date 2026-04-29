@@ -28,9 +28,9 @@ public class NotificationService {
     public SseEmitter openStream(String loginId) {
         Long userId = userFinder.getByLoginId(loginId).getId();
         SseEmitter emitter = new SseEmitter(30 * 60 * 1000L);
-        emitter.onTimeout(() -> sseEmitterRepository.remove(userId));
-        emitter.onCompletion(() -> sseEmitterRepository.remove(userId));
-        emitter.onError(e -> sseEmitterRepository.remove(userId));
+        emitter.onTimeout(() -> sseEmitterRepository.remove(userId, emitter));
+        emitter.onCompletion(() -> sseEmitterRepository.remove(userId, emitter));
+        emitter.onError(e -> sseEmitterRepository.remove(userId, emitter));
         sseEmitterRepository.add(userId, emitter);
         return emitter;
     }
@@ -73,7 +73,7 @@ public class NotificationService {
     }
 
     @EventListener
-    @CacheEvict(value = "unreadCount", allEntries = true)
+    @CacheEvict(value = "unreadCount", key = "#event.loginId")
     public void onUnreadCacheEvict(UnreadCacheEvictEvent event) {
     }
 }

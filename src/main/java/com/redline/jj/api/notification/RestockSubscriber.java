@@ -31,12 +31,17 @@ public class RestockSubscriber implements MessageListener {
             return;
         }
 
-        Long userId = ((Number) map.get("userId")).longValue();
+        Object rawUserId = map.get("userId");
+        if (!(rawUserId instanceof Number)) {
+            log.warn("재입고 알림 메시지 userId 필드가 없거나 잘못된 타입: {}", rawMessage);
+            return;
+        }
+        Long userId = ((Number) rawUserId).longValue();
         sseEmitterRepository.get(userId).ifPresent(emitter -> {
             try {
                 emitter.send(SseEmitter.event().data(rawMessage));
             } catch (IOException e) {
-                sseEmitterRepository.remove(userId);
+                sseEmitterRepository.remove(userId, emitter);
             }
         });
     }

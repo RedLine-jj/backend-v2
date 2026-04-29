@@ -26,6 +26,10 @@ public class SseEmitterRepository {
         emitters.remove(userId);
     }
 
+    public void remove(Long userId, SseEmitter emitter) {
+        emitters.remove(userId, emitter);
+    }
+
     public Optional<SseEmitter> get(Long userId) {
         return Optional.ofNullable(emitters.get(userId));
     }

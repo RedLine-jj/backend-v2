@@ -39,7 +39,8 @@ public class RestockEventHandler {
             );
 
             Long userId = subscription.getUser().getId();
-            eventPublisher.publishEvent(new UnreadCacheEvictEvent(userId));
+            String loginId = subscription.getUser().getUserId();
+            eventPublisher.publishEvent(new UnreadCacheEvictEvent(userId, loginId));
 
             try {
                 redisTemplate.convertAndSend("restock", Map.of(
