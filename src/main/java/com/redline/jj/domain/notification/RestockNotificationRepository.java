@@ -13,6 +13,9 @@ public interface RestockNotificationRepository extends JpaRepository<RestockNoti
 
     List<RestockNotification> findByUser_IdOrderByCreatedAtDesc(Long userId);
 
+    @Query("SELECT n FROM RestockNotification n JOIN FETCH n.model m JOIN FETCH m.brand ORDER BY n.createdAt DESC LIMIT 10")
+    List<RestockNotification> findTop10WithModelOrderByCreatedAtDesc();
+
     @Modifying(clearAutomatically = true)
     @Query("UPDATE RestockNotification n SET n.read = true WHERE n.user.id = :userId AND n.read = false")
     int markAllAsReadByUserId(@Param("userId") Long userId);
