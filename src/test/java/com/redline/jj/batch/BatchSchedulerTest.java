@@ -65,6 +65,44 @@ class BatchSchedulerTest {
         scheduler = new BatchScheduler(taskScheduler, subscriptionRepository, jobMap, jobLauncher, fixedClock);
     }
 
+    // -----------------------------------------------------------------------
+    // start() 테스트
+    // -----------------------------------------------------------------------
+
+    @Test
+    void start_구독있으면_ACTIVE딜레이로_초기스케줄() {
+        // given
+        given(subscriptionRepository.existsAny()).willReturn(true);
+
+        // when
+        scheduler.start();
+
+        // then
+        ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(taskScheduler).schedule(any(Runnable.class), instantCaptor.capture());
+        assertThat(instantCaptor.getValue())
+            .isEqualTo(fixedClock.instant().plusMillis(BatchScheduler.DELAY_ACTIVE_MS));
+    }
+
+    @Test
+    void start_구독없으면_IDLE딜레이로_초기스케줄() {
+        // given
+        given(subscriptionRepository.existsAny()).willReturn(false);
+
+        // when
+        scheduler.start();
+
+        // then
+        ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(taskScheduler).schedule(any(Runnable.class), instantCaptor.capture());
+        assertThat(instantCaptor.getValue())
+            .isEqualTo(fixedClock.instant().plusMillis(BatchScheduler.DELAY_IDLE_MS));
+    }
+
+    // -----------------------------------------------------------------------
+    // runAndReschedule() 테스트
+    // -----------------------------------------------------------------------
+
     @Test
     void runAndReschedule_existsAny_true_3개Job실행후_ACTIVE딜레이로재스케줄() throws Exception {
         // given
@@ -79,10 +117,8 @@ class BatchSchedulerTest {
         // then - ACTIVE 딜레이(20분)로 다음 스케줄 등록 검증
         ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
         verify(taskScheduler).schedule(any(Runnable.class), instantCaptor.capture());
-
-        Instant scheduledAt = instantCaptor.getValue();
-        Instant expectedAfter = Instant.now(fixedClock).plusMillis(BatchScheduler.DELAY_ACTIVE_MS - 1000);
-        assertThat(scheduledAt).isAfter(expectedAfter);
+        assertThat(instantCaptor.getValue())
+            .isEqualTo(fixedClock.instant().plusMillis(BatchScheduler.DELAY_ACTIVE_MS));
     }
 
     @Test
@@ -99,10 +135,8 @@ class BatchSchedulerTest {
         // then - IDLE 딜레이(60분)로 다음 스케줄 등록 검증
         ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
         verify(taskScheduler).schedule(any(Runnable.class), instantCaptor.capture());
-
-        Instant scheduledAt = instantCaptor.getValue();
-        Instant expectedAfter = Instant.now(fixedClock).plusMillis(BatchScheduler.DELAY_IDLE_MS - 1000);
-        assertThat(scheduledAt).isAfter(expectedAfter);
+        assertThat(instantCaptor.getValue())
+            .isEqualTo(fixedClock.instant().plusMillis(BatchScheduler.DELAY_IDLE_MS));
     }
 
     @Test
@@ -119,5 +153,8 @@ class BatchSchedulerTest {
         verify(jobLauncher, times(3)).run(any(Job.class), any(JobParameters.class));
         verify(jobLauncher).run(eq(nestStoreCrawlingJob), any(JobParameters.class));
         verify(jobLauncher).run(eq(semiBasementCrawlingJob), any(JobParameters.class));
+
+        // then - 예외 발생 후에도 finally 블록에서 다음 스케줄이 등록되어야 한다
+        verify(taskScheduler).schedule(any(Runnable.class), any(Instant.class));
     }
 }

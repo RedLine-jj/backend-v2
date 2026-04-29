@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -92,11 +93,12 @@ class DashboardServiceTest {
             .build();
     }
 
-    private SiteOptionLog buildSiteOptionLog(Long id, SiteOption siteOption, String label, int price) {
+    private SiteOptionLog buildSiteOptionLog(Long id, SiteOption siteOption, String label, int price,
+                                              LocalDateTime capturedAt) {
         return SiteOptionLog.builder()
             .id(id)
             .siteOption(siteOption)
-            .capturedAt(LocalDateTime.now())
+            .capturedAt(capturedAt)
             .optionLabel(label)
             .price(price)
             .inStock(true)
@@ -172,6 +174,17 @@ class DashboardServiceTest {
     }
 
     @Test
+    void getPriceHistory_음수days_INVALID_DAYS() {
+        // given - days 검증은 모델 조회 전에 발생하므로 mock 불필요
+
+        // when / then
+        assertThatThrownBy(() -> dashboardService.getPriceHistory(1L, -1))
+            .isInstanceOf(BusinessException.class)
+            .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_DAYS));
+    }
+
+    @Test
     void getPriceHistory_days30_로그조회_오름차순() {
         // given
         Brand brand = buildBrand();
@@ -179,8 +192,11 @@ class DashboardServiceTest {
         Site site = buildSite(1L, "modeMan", "https://mode-man.com");
         SiteOption siteOption = buildSiteOption(1L, site, model, "30/30", 89000);
 
-        SiteOptionLog log1 = buildSiteOptionLog(1L, siteOption, "30/30", 85000);
-        SiteOptionLog log2 = buildSiteOptionLog(2L, siteOption, "30/30", 89000);
+        LocalDateTime earlier = LocalDateTime.of(2024, 1, 1, 10, 0);
+        LocalDateTime later   = LocalDateTime.of(2024, 1, 2, 10, 0);
+
+        SiteOptionLog log1 = buildSiteOptionLog(1L, siteOption, "30/30", 85000, earlier);
+        SiteOptionLog log2 = buildSiteOptionLog(2L, siteOption, "30/30", 89000, later);
 
         given(modelRepository.findById(1L)).willReturn(Optional.of(model));
         given(siteOptionLogRepository.findByModelIdSince(eq(1L), any(LocalDateTime.class)))
@@ -190,7 +206,10 @@ class DashboardServiceTest {
         PriceHistoryResponse result = dashboardService.getPriceHistory(1L, 30);
 
         // then
-        assertThat(result.getHistories()).isNotEmpty();
+        assertThat(result.getHistories()).hasSize(1);
+        List<PriceHistoryResponse.PricePoint> points = result.getHistories().get(0).points();
+        assertThat(points).hasSize(2);
+        assertThat(points.get(0).capturedAt()).isBefore(points.get(1).capturedAt());
         verify(siteOptionLogRepository).findByModelIdSince(eq(1L), any(LocalDateTime.class));
     }
 
@@ -241,5 +260,29 @@ class DashboardServiceTest {
 
         // then
         assertThat(result).hasSize(2);
+    }
+
+    @Test
+    void getRecentRestocks_10건_순서유지() {
+        // given
+        Brand brand = buildBrand();
+        Model model = buildModel(brand);
+        User user = User.builder().id(1L).userId("testUser").userPw("pw").userName("테스터").build();
+
+        List<RestockNotification> notifications = new ArrayList<>();
+        for (long i = 1; i <= 10; i++) {
+            notifications.add(RestockNotification.builder().id(i).model(model).user(user).build());
+        }
+
+        given(restockNotificationRepository.findTop10WithModelOrderByCreatedAtDesc())
+            .willReturn(notifications);
+
+        // when
+        List<RecentRestockResponse> result = dashboardService.getRecentRestocks();
+
+        // then
+        assertThat(result).hasSize(10);
+        assertThat(result.get(0).getNotificationId()).isEqualTo(1L);
+        assertThat(result.get(9).getNotificationId()).isEqualTo(10L);
     }
 }

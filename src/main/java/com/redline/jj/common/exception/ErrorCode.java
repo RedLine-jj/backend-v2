@@ -22,6 +22,7 @@ public enum ErrorCode {
 
     MODEL_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "모델을 찾을 수 없습니다."),
     SITE_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "M002", "사이트 옵션을 찾을 수 없습니다."),
+    INVALID_DAYS(HttpStatus.BAD_REQUEST, "M003", "days 파라미터는 0 이상이어야 합니다."),
 
     SUBSCRIPTION_ALREADY_EXISTS(HttpStatus.CONFLICT, "S001", "이미 구독 중입니다."),
     SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "S002", "구독을 찾을 수 없습니다."),

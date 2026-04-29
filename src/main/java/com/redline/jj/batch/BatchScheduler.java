@@ -33,12 +33,24 @@ public class BatchScheduler {
 
     @PostConstruct
     public void start() {
-        scheduleNext(DELAY_ACTIVE_MS);
+        scheduleNext(resolveDelay());
     }
 
     void runAndReschedule() {
-        runAllJobs();
-        scheduleNext(subscriptionRepository.existsAny() ? DELAY_ACTIVE_MS : DELAY_IDLE_MS);
+        try {
+            runAllJobs();
+        } finally {
+            scheduleNext(resolveDelay());
+        }
+    }
+
+    private long resolveDelay() {
+        try {
+            return subscriptionRepository.existsAny() ? DELAY_ACTIVE_MS : DELAY_IDLE_MS;
+        } catch (Exception e) {
+            log.warn("[BatchScheduler] 구독 여부 조회 실패 — ACTIVE 딜레이 사용", e);
+            return DELAY_ACTIVE_MS;
+        }
     }
 
     private void runAllJobs() {

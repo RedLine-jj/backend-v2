@@ -14,7 +14,7 @@ class ErrorCodeTest {
 
     @Test
     void ErrorCode_총_개수는_18개다() {
-        assertThat(ErrorCode.values()).hasSize(21);
+        assertThat(ErrorCode.values()).hasSize(22);
     }
 
     @EnumSource(ErrorCode.class)
@@ -34,6 +34,7 @@ class ErrorCodeTest {
         "RATE_LIMIT_EXCEEDED,   429, U006",
         "MODEL_NOT_FOUND,       404, M001",
         "SITE_OPTION_NOT_FOUND, 404, M002",
+        "INVALID_DAYS,          400, M003",
         "SUBSCRIPTION_ALREADY_EXISTS, 409, S001",
         "SUBSCRIPTION_NOT_FOUND,      404, S002",
         "NOTIFICATION_NOT_FOUND,      404, N001",

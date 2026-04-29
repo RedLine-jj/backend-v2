@@ -62,6 +62,9 @@ dependencies {
     // Bucket4j
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
 
+    // Caffeine (rate-limit 버킷 TTL 캐시)
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
     // dotenv (.env 파일 로드)
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 

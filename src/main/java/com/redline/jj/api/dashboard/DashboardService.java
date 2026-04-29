@@ -38,6 +38,9 @@ public class DashboardService {
     }
 
     public PriceHistoryResponse getPriceHistory(Long modelId, int days) {
+        if (days < 0) {
+            throw new BusinessException(ErrorCode.INVALID_DAYS);
+        }
         modelRepository.findById(modelId)
             .orElseThrow(() -> new BusinessException(ErrorCode.MODEL_NOT_FOUND));
         LocalDateTime since = LocalDateTime.now().minusDays(days);
