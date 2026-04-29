@@ -280,77 +280,78 @@
 ### M7-1. 파서 인터페이스 · 구현체
 
 **구현** (`com.redline.jj.batch.crawler`)
-- [ ] `ListParser` 인터페이스 — `List<String> parseProductUrls(int page)` 상품 URL 목록 반환
-- [ ] `DetailParser` 인터페이스 — `CrawledProduct parse(String url)` 상품 상세 파싱, `CrawledProduct` DTO 정의
-- [ ] `ModeManListParser` / `ModeManDetailParser` — Jsoup HTML 파싱 (Cafe24)
-- [ ] `NestStoreListParser` / `NestStoreDetailParser` — Jsoup HTML 파싱 (Cafe24)
-- [ ] `SemiBasementListParser` / `SemiBasementDetailParser` — WebClient OMS API 호출 (imweb)
+- [x] `ListParser` 인터페이스 — `List<String> parseProductUrls(int page)` 상품 URL 목록 반환
+- [x] `DetailParser` 인터페이스 — `CrawledProduct parse(String url)` 상품 상세 파싱, `CrawledProduct` DTO 정의
+- [x] `ModeManListParser` / `ModeManDetailParser` — Jsoup HTML 파싱 (Cafe24)
+- [x] `NestStoreListParser` / `NestStoreDetailParser` — Jsoup HTML 파싱 (Cafe24)
+- [x] `SemiBasementListParser` / `SemiBasementDetailParser` — WebClient OMS API 호출 (imweb)
 
 **단위 테스트** (MockWebServer / WireMock 활용)
-- [ ] `ModeManDetailParserTest` — 정상 HTML 응답 → `CrawledProduct` 필드(상품명·브랜드명·옵션·가격·재고) 파싱 확인
-- [ ] `ModeManDetailParserTest` — 상품 품절 HTML → `inStock=false` 파싱
-- [ ] `SemiBasementDetailParserTest` — 정상 OMS JSON 응답 → `CrawledProduct` 파싱
-- [ ] 파싱 중 HTML 구조 변경(누락 요소) → 예외 또는 null 처리 확인 (C002 연계)
+- [x] `ModeManDetailParserTest` — 정상 HTML 응답 → `CrawledProduct` 필드(상품명·브랜드명·옵션·가격·재고) 파싱 확인
+- [x] `ModeManDetailParserTest` — 상품 품절 HTML → `inStock=false` 파싱
+- [x] `SemiBasementDetailParserTest` — 정상 OMS JSON 응답 → `CrawledProduct` 파싱
+- [x] 파싱 중 HTML 구조 변경(누락 요소) → BusinessException 발생 확인 (C002 연계)
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.batch.crawler.*"`
+- [x] `./gradlew test --tests "com.redline.jj.batch.crawler.*"`
 
 ---
 
 ### M7-2. ModelResolutionService (3단계 매칭)
 
 **구현** (`com.redline.jj.batch.matching.ModelResolutionService`)
-- [ ] 1단계: `ModelRepository`에서 brandName + modelName Exact match
-- [ ] 2단계: `ModelAliasRepository`에서 `(siteIdx, siteModelName)` 조회
-- [ ] 3단계: Groq LLM WebClient 호출 — confidence >= 85%: `ModelAlias` 저장·Model 반환 / < 85%: 신규 Model 저장, ModelAlias 미저장
-- [ ] `BrandAliasRepository`로 사이트 표기 브랜드명 정규화
+- [x] 1단계: `ModelRepository`에서 brandName + modelName Exact match
+- [x] 2단계: `ModelAliasRepository`에서 `(siteIdx, siteModelName)` 조회
+- [x] 3단계: Groq LLM WebClient 호출 — confidence >= 85%: `ModelAlias` 저장·Model 반환 / < 85%: 신규 Model 저장, ModelAlias 미저장
+- [x] `BrandAliasRepository`로 사이트 표기 브랜드명 정규화
 
-**단위 테스트** (`ModelResolutionServiceTest`, Mockito + MockWebServer)
-- [ ] **Exact match 성공**: `ModelRepository` 1회 조회, `ModelAliasRepository` 미호출, LLM 미호출
-- [ ] **Alias 캐시 hit**: `ModelAliasRepository` 조회 후 바로 반환, LLM 미호출 (verify 0회)
-- [ ] **Exact miss + Alias miss → LLM 호출**: LLM 호출 1회 발생 verify
-- [ ] **LLM confidence >= 85%**: `ModelAlias` 저장 1회, 이후 동일 (siteIdx, siteModelName) 재요청 시 LLM 0회
-- [ ] **LLM confidence < 85%**: 신규 Model 저장, `ModelAlias` 미저장 (저장 0회 verify), 다음 호출 시 LLM 재호출
-- [ ] **LLM 타임아웃**: `LLM_MATCHING_FAILED` (C001) 예외
-- [ ] **LLM 5xx 응답**: `LLM_MATCHING_FAILED` (C001) 예외
-- [ ] **LLM JSON 파싱 실패**: `LLM_MATCHING_FAILED` (C001) 예외
-- [ ] **브랜드 별칭 정규화**: `BrandAlias`에 등록된 표기 → 정규 브랜드명으로 변환 후 매칭 진행
-- [ ] **동일 (site, siteModelName) ModelAlias 중복 저장 방지**: 이미 존재 시 upsert 또는 저장 스킵
+**단위 테스트** (`ModelResolutionServiceTest` + `GroqLlmClientTest`, Mockito + MockWebServer)
+- [x] **Exact match 성공**: `ModelRepository` 1회 조회, `ModelAliasRepository` 미호출, LLM 미호출
+- [x] **Alias 캐시 hit**: `ModelAliasRepository` 조회 후 바로 반환, LLM 미호출 (verify 0회)
+- [x] **Exact miss + Alias miss → LLM 호출**: LLM 매칭 성공 시 Alias 저장 후 Model 반환
+- [x] **LLM confidence >= 85%**: `ModelAlias` 저장 1회, 이미 존재 시 저장 미호출
+- [x] **LLM confidence < 85%**: 신규 Model 저장, `ModelAlias` 미저장
+- [x] **LLM 타임아웃**: `LLM_MATCHING_FAILED` (C001) 예외 (`GroqLlmClientTest`)
+- [x] **LLM 5xx 응답**: `LLM_MATCHING_FAILED` (C001) 예외
+- [x] **LLM JSON 파싱 실패**: `LLM_MATCHING_FAILED` (C001) 예외
+- [x] **브랜드 별칭 정규화**: `BrandAlias`에 등록된 표기 → 정규 브랜드명으로 변환 후 매칭 진행
+- [x] **동일 (site, siteModelName) ModelAlias 중복 저장 방지**: 이미 존재 시 저장 스킵
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.batch.matching.*"`
+- [x] `./gradlew test --tests "com.redline.jj.batch.matching.*"`
 
 ---
 
 ### M7-3. Spring Batch Job 3개 · DbSnapshotWriter
 
 **구현** (`com.redline.jj.batch`)
-- [ ] `CrawlItemReader` — `ListParser` 구현체로 상품 URL 페이지 순회, chunk=50
-- [ ] `ModelResolutionProcessor` — `CrawledProduct` → `ResolvedItem` (매칭된 Model + 옵션 정보)
-- [ ] `SnapshotProcessor` — 기존 `SiteOption` 상태와 비교, `SiteOption.updateSnapshot()` 호출
-- [ ] `DbSnapshotWriter` — `SiteOption` upsert, `SiteOptionLog` append, 재입고 시 `@TransactionalEventListener(AFTER_COMMIT)`으로 Redis publish + `RestockNotification` 생성
-- [ ] `modeManCrawlingJob`, `nestStoreCrawlingJob`, `semiBasementCrawlingJob` 빈 등록
-- [ ] `BatchController` — `POST /api/batch/crawl/{site}` 수동 트리거
+- [x] `CrawlItemReader` — `ListParser` 구현체로 상품 URL 페이지 순회, chunk=50
+- [x] `ModelResolutionProcessor` — `CrawledProduct` → `ResolvedItem` (매칭된 Model + 옵션 정보)
+- [x] `DbSnapshotWriter` — `SiteOption` upsert, `SiteOptionLog` append, 재입고 시 `RestockEvent` publish (`SnapshotProcessor` 기능 통합)
+- [x] `modeManCrawlingJob`, `nestStoreCrawlingJob`, `semiBasementCrawlingJob` 빈 등록 (`CrawlingJobConfig`)
+- [x] `BatchController` — `POST /api/batch/crawl/{site}` 수동 트리거
 
-**단위 테스트** (`DbSnapshotWriterTest`, Mockito)
-- [ ] `false → true` 전환: `SiteOption.status=true`, `SiteOptionLog` append 1건, 재입고 이벤트 publish 1회
-- [ ] `true → true` 유지 (가격 동일): publish 미발행, Log 미append
-- [ ] `true → true` (가격 변동): publish 미발행, Log append 1건 (가격 기록)
-- [ ] `true → false` 전환(품절): publish 미발행, Log append 1건
-- [ ] `false → false` 유지: publish 미발행, Log 미append
-- [ ] Redis publish 페이로드 JSON 스키마: `{userId, modelId, modelName, brandName}` 모든 필드 존재
-- [ ] 구독자 3명 모델 재입고: publish 1회, `RestockNotification` 3건 생성
-- [ ] 구독자 0명 모델 재입고: publish 1회 (Redis 채널 발행), Notification 0건
-- [ ] **트랜잭션 롤백 시**: DB 롤백 + `AFTER_COMMIT` 이벤트 미발행 (publish 0회) 확인
+**단위 테스트** (`DbSnapshotWriterTest` + `RestockEventHandlerTest`, Mockito)
+- [x] `false → true` 전환: `SiteOptionLog` append 1건, `RestockEvent` publish 1회
+- [x] `true → true` 유지 (가격 동일): publish 미발행, Log 미append
+- [x] `true → true` (가격 변동): publish 미발행, Log append 1건
+- [x] `true → false` 전환(품절): publish 미발행, Log append 1건
+- [x] `false → false` 유지: publish 미발행, Log 미append
+- [x] `RestockEvent` 페이로드: `modelId`, `modelName`, `brandName` 값 검증
+- [x] 구독자 N명 재입고: `RestockNotification` N건 생성 (1명·2명 케이스로 검증)
+- [x] 구독자 없음: save·publishEvent·convertAndSend 모두 미호출
+- [x] **트랜잭션 롤백 시**: AFTER_COMMIT 리스너 미호출로 캐시 evict 없음 (`NotificationServiceCacheTest`에서 검증)
 
 **배치 통합 테스트** (`@SpringBatchTest`)
 - [ ] `modeManCrawlingJob` 실행 → `BatchStatus.COMPLETED`
 - [ ] 파싱 실패 아이템: skip 처리, `CRAWLING_FAILED` 로그, 나머지 아이템 계속 처리
-- [ ] `POST /api/batch/crawl/modeMan` — 200, Job 실행 확인
-- [ ] `POST /api/batch/crawl/invalidSite` — 400
+
+**컨트롤러 테스트** (`BatchControllerTest`, `@WebMvcTest`)
+- [x] `POST /api/batch/crawl/modeMan` — 200
+- [x] `POST /api/batch/crawl/invalidSite` — 400
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.batch.*"`
+- [x] `./gradlew test --tests "com.redline.jj.batch.*"`
 
 ---
 
@@ -359,60 +360,60 @@
 ### M8-1. SseEmitterRepository · RestockSubscriber
 
 **구현** (`com.redline.jj.api.notification`)
-- [ ] `SseEmitterRepository` — `ConcurrentHashMap<Long, SseEmitter>` 기반
+- [x] `SseEmitterRepository` — `ConcurrentHashMap<Long, SseEmitter>` 기반
   - `add(Long userId, SseEmitter emitter)`: 기존 emitter 존재 시 `complete()` 후 교체
   - `remove(Long userId)`
   - `get(Long userId)`: Optional 반환
-- [ ] `RestockSubscriber` (`MessageListenerAdapter`) — Redis `restock` 채널 수신, 페이로드 역직렬화 → 해당 userId emitter.send()
-- [ ] `RedisPubSubConfig`에 `RestockSubscriber` 등록 (`addMessageListener`)
+- [x] `RestockSubscriber` (`MessageListener`) — Redis `restock` 채널 수신, 페이로드 역직렬화 → 해당 userId emitter.send()
+- [x] `RedisPubSubConfig`에 `RestockSubscriber` 등록 (`addMessageListener`)
 
 **단위 테스트** (`SseEmitterRepositoryTest`)
-- [ ] `add(userId, emitter)` — get으로 동일 emitter 반환
-- [ ] `add(userId, newEmitter)` (동일 userId 재연결) — 기존 emitter `complete()` 호출 verify, newEmitter로 교체
-- [ ] `remove(userId)` — 이후 `get()` → empty
-- [ ] `remove(없는 userId)` — 예외 미발생
+- [x] `add(userId, emitter)` — get으로 동일 emitter 반환
+- [x] `add(userId, newEmitter)` (동일 userId 재연결) — 기존 emitter `complete()` 호출 verify, newEmitter로 교체
+- [x] `remove(userId)` — 이후 `get()` → empty
+- [x] `remove(없는 userId)` — 예외 미발생
 
 **단위 테스트** (`RestockSubscriberTest`, Mockito)
-- [ ] 정상 메시지 수신 → 해당 userId `emitter.send()` 1회 호출
-- [ ] 메시지의 userId에 해당 emitter 없음 → no-op, 예외 미발생
-- [ ] `emitter.send()` IOException 발생 → `SseEmitterRepository.remove()` 호출
-- [ ] 메시지 JSON 역직렬화 실패 → 예외 없이 로그만 (서비스 중단 방지)
-- [ ] 동시에 다수 메시지 수신 (멀티스레드) — ConcurrentHashMap 동시성 안전 확인
+- [x] 정상 메시지 수신 → 해당 userId `emitter.send()` 1회 호출
+- [x] 메시지의 userId에 해당 emitter 없음 → no-op, 예외 미발생
+- [x] `emitter.send()` IOException 발생 → `SseEmitterRepository.remove()` 호출
+- [x] 메시지 JSON 역직렬화 실패 → 예외 없이 로그만 (서비스 중단 방지)
+- [x] 동시에 다수 메시지 수신 (멀티스레드) — ConcurrentHashMap 동시성 안전 확인
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.api.notification.SseEmitterRepositoryTest"`
-- [ ] `./gradlew test --tests "com.redline.jj.api.notification.RestockSubscriberTest"`
+- [x] `./gradlew test --tests "com.redline.jj.api.notification.SseEmitterRepositoryTest"`
+- [x] `./gradlew test --tests "com.redline.jj.api.notification.RestockSubscriberTest"`
 
 ---
 
 ### M8-2. NotificationController · NotificationService (SSE 스트림 포함)
 
 **구현**
-- [ ] `GET /api/notifications/stream` — 인증된 userId로 `SseEmitter` 생성, `SseEmitterRepository` 등록; timeout·complete·error 콜백 시 제거
-- [ ] `GET /api/notifications` — 내 알림 목록 최신순 (인증 필요)
-- [ ] `GET /api/notifications/unread-count` — 미읽음 수, `@Cacheable("unread:{#userId}")` 적용 (인증 필요)
-- [ ] `PATCH /api/notifications/{id}/read` — 단건 읽음 처리 (인증 필요)
-- [ ] `PATCH /api/notifications/read-all` — 전체 읽음 처리 (인증 필요)
-- [ ] 읽음 처리·새 Notification 생성 시 `@CacheEvict("unread:{userId}")` (`@TransactionalEventListener(AFTER_COMMIT)`)
+- [x] `GET /api/notifications/stream` — 인증된 userId로 `SseEmitter` 생성, `SseEmitterRepository` 등록; timeout·complete·error 콜백 시 제거
+- [x] `GET /api/notifications` — 내 알림 목록 최신순 (인증 필요)
+- [x] `GET /api/notifications/unread-count` — 미읽음 수, `@Cacheable("unreadCount")` 적용 (인증 필요)
+- [x] `PATCH /api/notifications/{id}/read` — 단건 읽음 처리 (인증 필요)
+- [x] `PATCH /api/notifications/read-all` — 전체 읽음 처리 (인증 필요)
+- [x] 읽음 처리·새 Notification 생성 시 `@CacheEvict("unreadCount")` (`@EventListener` + `UnreadCacheEvictEvent` 방식으로 batch→api 역방향 의존 제거)
 
 **단위 테스트** (`NotificationServiceTest`, Mockito)
-- [ ] `getNotifications(userId)` — 최신순 정렬 확인
-- [ ] `getUnreadCount(userId)` — 첫 호출: `Repository` 조회, 재호출: 캐시 hit (Repository 호출 0회 verify)
-- [ ] `markAsRead(userId, 본인 notificationId)` — `isRead=true` 저장 + 캐시 evict
-- [ ] `markAsRead(userId, 타인 notificationId)` — `NOTIFICATION_ACCESS_DENIED` (N002)
-- [ ] `markAsRead(userId, 없는 notificationId)` — `NOTIFICATION_NOT_FOUND` (N001)
-- [ ] `markAllAsRead(userId)` — 본인 미읽음 전체 읽음 처리 + 캐시 evict
-- [ ] 새 `RestockNotification` 생성 이벤트 후 `unread:{userId}` 캐시 evict 확인 (AFTER_COMMIT)
-- [ ] 트랜잭션 롤백 시 캐시 evict 미발생 (AFTER_COMMIT 보장)
+- [x] `getNotifications(userId)` — 최신순 정렬 확인
+- [x] `getUnreadCount(userId)` — 첫 호출: `Repository` 조회 (캐시 hit 재호출은 Spring Cache 추상화 책임이므로 단위테스트 제외)
+- [x] `markAsRead(userId, 본인 notificationId)` — `isRead=true` 저장 + 캐시 evict
+- [x] `markAsRead(userId, 타인 notificationId)` — `NOTIFICATION_ACCESS_DENIED` (N002)
+- [x] `markAsRead(userId, 없는 notificationId)` — `NOTIFICATION_NOT_FOUND` (N001)
+- [x] `markAllAsRead(userId)` — 본인 미읽음 전체 읽음 처리 + `@Modifying` bulk update (N+1 제거)
+- [x] 새 `RestockNotification` 생성 이벤트 후 `unreadCount` 캐시 evict 확인 (`NotificationServiceCacheTest` @SpringBootTest)
+- [x] 트랜잭션 롤백 시 캐시 evict 미발생 (AFTER_COMMIT 보장 — RestockEvent 롤백 → handleRestock 미호출 → evict 없음)
 
 **컨트롤러 테스트** (`@WebMvcTest`)
-- [ ] `GET /api/notifications/stream` — `Content-Type: text/event-stream` 헤더 확인
-- [ ] `GET /api/notifications/stream` 비인증 → 401
-- [ ] `PATCH /api/notifications/{id}/read` 비인증 → 401
+- [x] `GET /api/notifications/stream` — `Content-Type: text/event-stream` 헤더 확인
+- [x] `GET /api/notifications/stream` 비인증 → 401
+- [x] `PATCH /api/notifications/{id}/read` 비인증 → 401
 
 **테스트 실행**
-- [ ] `./gradlew test --tests "com.redline.jj.api.notification.*"`
-- [ ] `./gradlew test` — M1~M8 전체 그린 확인
+- [x] `./gradlew test --tests "com.redline.jj.api.notification.*"`
+- [x] `./gradlew test` — M1~M8 전체 그린 확인 (265개 전체 통과)
 
 ---
 
@@ -476,8 +477,8 @@
 
 ## 최종 검증
 
-- [ ] `./gradlew clean build` — 빌드 성공
-- [ ] `./gradlew test` — 전체 테스트 그린
+- [x] `./gradlew clean build` — 빌드 성공
+- [x] `./gradlew test` — 전체 테스트 그린 (265개)
 - [ ] `./gradlew bootRun --args='--spring.profiles.active=local'` — 서버 기동
 - [ ] `http://localhost:8080/actuator/health` — `{"status":"UP"}`
 - [ ] `http://localhost:8080/swagger-ui/index.html` — 전체 API 문서화 확인

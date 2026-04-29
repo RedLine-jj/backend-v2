@@ -22,3 +22,15 @@ jwt:
   secret: dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktMjU2LWJpdHM=
   access-token-expiration: 1800000
   refresh-token-expiration: 604800000
+
+crawler:
+  modeman:
+    base-url: https://test-modeman.example.com
+  neststore:
+    base-url: https://test-neststore.example.com
+  semibasement:
+    base-url: https://test-semibasement.example.com
+
+groq:
+  api-key: test-api-key
+  prompt: "후보 모델 목록: {candidates}\n크롤링 상품명: {product}"
