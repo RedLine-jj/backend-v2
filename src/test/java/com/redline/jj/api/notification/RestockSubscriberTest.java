@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.*;
@@ -78,7 +79,7 @@ class RestockSubscriberTest {
         String json = "{\"userId\":1,\"modelId\":10,\"modelName\":\"Test\",\"brandName\":\"Brand\"}";
         subscriber.onMessage(buildMessage(json), null);
 
-        verify(sseEmitterRepository, times(1)).remove(1L);
+        verify(sseEmitterRepository, times(1)).remove(eq(1L), any(SseEmitter.class));
     }
 
     @Test
@@ -118,9 +119,11 @@ class RestockSubscriberTest {
         }
 
         startLatch.countDown();
-        endLatch.await(5, TimeUnit.SECONDS);
+        boolean finished = endLatch.await(5, TimeUnit.SECONDS);
         executor.shutdown();
+        executor.awaitTermination(1, TimeUnit.SECONDS);
 
+        assertThat(finished).as("10개 스레드가 5초 내에 완료되어야 합니다").isTrue();
         assertThat(errors).isEmpty();
         verify(emitter, times(threadCount)).send(any(SseEmitter.SseEventBuilder.class));
     }

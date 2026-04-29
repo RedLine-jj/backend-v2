@@ -7,7 +7,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 class SseEmitterRepositoryTest {
 
@@ -55,5 +57,34 @@ class SseEmitterRepositoryTest {
     void 없는_userId_remove_예외_없음() {
         assertThatCode(() -> repository.remove(999L))
             .doesNotThrowAnyException();
+    }
+
+    // =========================================================================
+    // remove(userId, emitter) — 인스턴스 동일성 조건부 remove
+    // =========================================================================
+
+    @Test
+    @DisplayName("remove(userId, emitter) 동일 인스턴스 - 제거됨")
+    void remove_동일_인스턴스_제거() {
+        SseEmitter emitter = new SseEmitter();
+        repository.add(1L, emitter);
+
+        repository.remove(1L, emitter);
+
+        assertThat(repository.get(1L)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("remove(userId, emitter) 다른 인스턴스 - 제거 안 됨")
+    void remove_다른_인스턴스_제거_안됨() {
+        SseEmitter currentEmitter = new SseEmitter();
+        SseEmitter staleEmitter = new SseEmitter();
+
+        repository.add(1L, currentEmitter);
+
+        // staleEmitter는 currentEmitter와 다른 인스턴스이므로 조건부 remove 미발생
+        repository.remove(1L, staleEmitter);
+
+        assertThat(repository.get(1L)).contains(currentEmitter);
     }
 }

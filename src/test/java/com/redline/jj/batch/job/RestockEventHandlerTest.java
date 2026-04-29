@@ -57,6 +57,7 @@ class RestockEventHandlerTest {
         // given
         User user = mock(User.class);
         given(user.getId()).willReturn(10L);
+        given(user.getUserId()).willReturn("user10");
 
         Model model = mock(Model.class);
 
@@ -78,11 +79,12 @@ class RestockEventHandlerTest {
     }
 
     @Test
-    @DisplayName("구독자 1명 - publishEvent에 전달된 UnreadCacheEvictEvent의 userId가 구독자 userId와 일치한다")
+    @DisplayName("구독자 1명 - publishEvent에 전달된 UnreadCacheEvictEvent의 userId·loginId가 구독자와 일치한다")
     void 구독자_1명_publishEvent_userId_일치() {
         // given
         User user = mock(User.class);
         given(user.getId()).willReturn(42L);
+        given(user.getUserId()).willReturn("user42");
 
         Model model = mock(Model.class);
 
@@ -101,6 +103,7 @@ class RestockEventHandlerTest {
         ArgumentCaptor<UnreadCacheEvictEvent> captor = ArgumentCaptor.forClass(UnreadCacheEvictEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
         assertThat(captor.getValue().userId()).isEqualTo(42L);
+        assertThat(captor.getValue().loginId()).isEqualTo("user42");
     }
 
     // =========================================================================
@@ -113,8 +116,10 @@ class RestockEventHandlerTest {
         // given
         User user1 = mock(User.class);
         given(user1.getId()).willReturn(10L);
+        given(user1.getUserId()).willReturn("user1");
         User user2 = mock(User.class);
         given(user2.getId()).willReturn(20L);
+        given(user2.getUserId()).willReturn("user2");
 
         Model model = mock(Model.class);
 
@@ -149,6 +154,7 @@ class RestockEventHandlerTest {
         // given
         User user = mock(User.class);
         given(user.getId()).willReturn(10L);
+        given(user.getUserId()).willReturn("user10");
 
         Model model = mock(Model.class);
 

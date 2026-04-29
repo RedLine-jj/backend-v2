@@ -11,9 +11,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -23,10 +27,18 @@ import java.util.Objects;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-// 로컬 인프라 전제 조건(CLAUDE.md): Redis localhost:6379이 기동 상태여야 한다.
-@SpringBootTest
+@SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
 @ActiveProfiles("test")
 class NotificationServiceCacheTest {
+
+    @TestConfiguration
+    static class TestCacheConfig {
+        @Bean
+        @Primary
+        CacheManager cacheManager() {
+            return new ConcurrentMapCacheManager("unreadCount");
+        }
+    }
 
     @Autowired
     private NotificationService notificationService;
@@ -72,8 +84,8 @@ class NotificationServiceCacheTest {
         notificationService.getUnreadCount("testuser");
         verify(notificationRepository, times(1)).countByUser_IdAndReadFalse(1L);
 
-        // 2. UnreadCacheEvictEvent 발행 → @CacheEvict(allEntries=true) 작동
-        applicationEventPublisher.publishEvent(new UnreadCacheEvictEvent(1L));
+        // 2. UnreadCacheEvictEvent 발행 → @CacheEvict(key="#event.loginId") 작동
+        applicationEventPublisher.publishEvent(new UnreadCacheEvictEvent(1L, "testuser"));
 
         // 3. 재호출: cache miss (evict됨) → Repository 재조회
         notificationService.getUnreadCount("testuser");
