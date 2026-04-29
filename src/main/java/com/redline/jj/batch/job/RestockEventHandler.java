@@ -2,10 +2,12 @@ package com.redline.jj.batch.job;
 
 import com.redline.jj.domain.notification.RestockNotification;
 import com.redline.jj.domain.notification.RestockNotificationRepository;
+import com.redline.jj.domain.notification.UnreadCacheEvictEvent;
 import com.redline.jj.domain.subscription.Subscription;
 import com.redline.jj.domain.subscription.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -22,6 +24,7 @@ public class RestockEventHandler {
     private final SubscriptionRepository subscriptionRepository;
     private final RestockNotificationRepository restockNotificationRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleRestock(RestockEvent event) {
@@ -35,16 +38,19 @@ public class RestockEventHandler {
                     .build()
             );
 
+            Long userId = subscription.getUser().getId();
+            eventPublisher.publishEvent(new UnreadCacheEvictEvent(userId));
+
             try {
                 redisTemplate.convertAndSend("restock", Map.of(
-                    "userId", subscription.getUser().getId(),
+                    "userId", userId,
                     "modelId", event.modelId(),
                     "modelName", event.modelName(),
                     "brandName", event.brandName()
                 ));
             } catch (Exception e) {
                 log.warn("Redis 재입고 알림 전송 실패 — userId={}, modelId={}",
-                    subscription.getUser().getId(), event.modelId(), e);
+                    userId, event.modelId(), e);
             }
         }
     }

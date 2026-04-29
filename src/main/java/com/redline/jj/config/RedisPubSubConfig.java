@@ -1,18 +1,22 @@
 package com.redline.jj.config;
 
+import com.redline.jj.api.notification.RestockSubscriber;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
 @Configuration
 public class RedisPubSubConfig {
 
     @Bean
-    public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory connectionFactory) {
+    public RedisMessageListenerContainer redisMessageListenerContainer(
+            RedisConnectionFactory connectionFactory,
+            RestockSubscriber restockSubscriber) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        // 구독자(Subscriber)는 각 기능 구현 시 등록
+        container.addMessageListener(restockSubscriber, new PatternTopic("restock"));
         return container;
     }
 }
