@@ -19,11 +19,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final int CAPACITY = 60;
     private static final int MAX_IPS = 10_000;
+    private static final Pattern VALID_IP = Pattern.compile(
+        "^(\\d{1,3}(\\.\\d{1,3}){3}|[0-9a-fA-F:]{2,39})$"
+    );
 
     private final Cache<String, Bucket> buckets = Caffeine.newBuilder()
         .maximumSize(MAX_IPS)
@@ -68,7 +72,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (isTrustedProxy(remoteAddr)) {
             String xff = request.getHeader("X-Forwarded-For");
             if (StringUtils.hasText(xff)) {
-                return xff.split(",")[0].trim();
+                String candidate = xff.split(",")[0].trim();
+                if (VALID_IP.matcher(candidate).matches()) {
+                    return candidate;
+                }
             }
         }
         return remoteAddr;
@@ -78,7 +85,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (addr == null) {
             return false;
         }
-        return addr.equals("127.0.0.1")
+        return addr.startsWith("127.")
             || addr.equals("0:0:0:0:0:0:0:1")
             || addr.equals("::1")
             || addr.startsWith("10.")

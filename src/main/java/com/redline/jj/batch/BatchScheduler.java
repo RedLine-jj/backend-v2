@@ -48,8 +48,8 @@ public class BatchScheduler {
         try {
             return subscriptionRepository.existsAny() ? DELAY_ACTIVE_MS : DELAY_IDLE_MS;
         } catch (Exception e) {
-            log.warn("[BatchScheduler] 구독 여부 조회 실패 — ACTIVE 딜레이 사용", e);
-            return DELAY_ACTIVE_MS;
+            log.warn("[BatchScheduler] 구독 여부 조회 실패 — IDLE 딜레이 사용", e);
+            return DELAY_IDLE_MS;
         }
     }
 
