@@ -17,6 +17,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,6 +62,38 @@ class RestockNotificationRepositoryTest {
             .userPw("pw123")
             .userName("홍길동")
             .build());
+    }
+
+    // =========================================================================
+    // findTop10ByOrderByCreatedAtDesc — Top10 파생 쿼리 + @EntityGraph 검증
+    // =========================================================================
+
+    @Test
+    @DisplayName("findTop10ByOrderByCreatedAtDesc: 15건 저장 시 최신 10건만 반환하고 model·brand가 즉시 로딩된다")
+    void Top10_파생쿼리_15건_저장_시_10건_반환_및_연관관계_즉시로딩() {
+        // given — 알림 15건 순서대로 저장, 삽입 순 ID 캡처
+        List<Long> insertedIds = new ArrayList<>();
+        for (int i = 0; i < 15; i++) {
+            insertedIds.add(notificationRepository.save(
+                RestockNotification.builder().user(user).model(model).build()
+            ).getId());
+        }
+        em.flush();
+        em.clear();
+
+        // when
+        List<RestockNotification> result = notificationRepository.findTop10ByOrderByCreatedAtDesc();
+
+        // then — 크기, 연관관계 즉시로딩
+        assertThat(result).hasSize(10);
+        assertThat(result.get(0).getModel()).isNotNull();
+        assertThat(result.get(0).getModel().getBrand()).isNotNull();
+
+        // then — 마지막 10건이 역순(최신순)으로 반환되는지 검증
+        List<Long> last10 = new ArrayList<>(insertedIds.subList(5, 15));
+        Collections.reverse(last10);
+        assertThat(result).extracting(r -> r.getId())
+            .containsExactlyElementsOf(last10);
     }
 
     // =========================================================================

@@ -48,4 +48,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
         WHERE s.model.id = :modelId
         """)
     List<Subscription> findByModel_Id(@Param("modelId") Long modelId);
+
+    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Subscription s")
+    boolean existsAny();
 }
