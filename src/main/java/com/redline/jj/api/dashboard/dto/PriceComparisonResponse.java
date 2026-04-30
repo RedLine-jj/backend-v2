@@ -15,6 +15,7 @@ public class PriceComparisonResponse {
     private final Long modelId;
     private final String modelName;
     private final String brandName;
+    private final String imageUrl;
     private final List<SiteRow> sites;
 
     public record SiteRow(
@@ -27,16 +28,18 @@ public class PriceComparisonResponse {
     public record OptionEntry(
         Long siteOptionId,
         String optionLabel,
-        boolean inStock,
+        boolean status,
         Integer price,
         String url,
         LocalDateTime lastCapturedAt
     ) {}
 
-    private PriceComparisonResponse(Long modelId, String modelName, String brandName, List<SiteRow> sites) {
+    private PriceComparisonResponse(Long modelId, String modelName, String brandName,
+                                     String imageUrl, List<SiteRow> sites) {
         this.modelId = modelId;
         this.modelName = modelName;
         this.brandName = brandName;
+        this.imageUrl = imageUrl;
         this.sites = sites;
     }
 
@@ -69,23 +72,14 @@ public class PriceComparisonResponse {
             model.getId(),
             model.getModelName(),
             model.getBrand().getBrandName(),
+            model.getImageUrl(),
             siteRows
         );
     }
 
-    public Long getModelId() {
-        return modelId;
-    }
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public String getBrandName() {
-        return brandName;
-    }
-
-    public List<SiteRow> getSites() {
-        return sites;
-    }
+    public Long getModelId() { return modelId; }
+    public String getModelName() { return modelName; }
+    public String getBrandName() { return brandName; }
+    public String getImageUrl() { return imageUrl; }
+    public List<SiteRow> getSites() { return sites; }
 }

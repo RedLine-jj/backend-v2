@@ -10,5 +10,5 @@ public interface ModelSubscriptionCount {
 
     String getModelName();
 
-    String getBrandName();
+    Long getCount();
 }

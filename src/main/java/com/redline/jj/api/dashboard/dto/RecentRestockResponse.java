@@ -1,53 +1,35 @@
 package com.redline.jj.api.dashboard.dto;
 
-import com.redline.jj.domain.notification.RestockNotification;
+import com.redline.jj.domain.option.SiteOptionLog;
 
 import java.time.LocalDateTime;
 
 public class RecentRestockResponse {
 
-    private final Long notificationId;
     private final Long modelId;
     private final String modelName;
-    private final String brandName;
-    private final LocalDateTime notifiedAt;
+    private final String siteName;
+    private final LocalDateTime restockedAt;
 
-    private RecentRestockResponse(Long notificationId, Long modelId, String modelName,
-                                   String brandName, LocalDateTime notifiedAt) {
-        this.notificationId = notificationId;
+    private RecentRestockResponse(Long modelId, String modelName,
+                                   String siteName, LocalDateTime restockedAt) {
         this.modelId = modelId;
         this.modelName = modelName;
-        this.brandName = brandName;
-        this.notifiedAt = notifiedAt;
+        this.siteName = siteName;
+        this.restockedAt = restockedAt;
     }
 
-    public static RecentRestockResponse from(RestockNotification n) {
+    public static RecentRestockResponse from(SiteOptionLog log) {
         return new RecentRestockResponse(
-            n.getId(),
-            n.getModel().getId(),
-            n.getModel().getModelName(),
-            n.getModel().getBrand().getBrandName(),
-            n.getCreatedAt()
+            log.getSiteOption().getModel().getId(),
+            log.getSiteOption().getModel().getModelName(),
+            log.getSiteOption().getSite().getSiteName(),
+            log.getCapturedAt()
         );
     }
 
-    public Long getNotificationId() {
-        return notificationId;
-    }
-
-    public Long getModelId() {
-        return modelId;
-    }
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public String getBrandName() {
-        return brandName;
-    }
-
-    public LocalDateTime getNotifiedAt() {
-        return notifiedAt;
-    }
+    public Long getModelId() { return modelId; }
+    public String getModelName() { return modelName; }
+    public String getSiteName() { return siteName; }
+    public LocalDateTime getRestockedAt() { return restockedAt; }
 }

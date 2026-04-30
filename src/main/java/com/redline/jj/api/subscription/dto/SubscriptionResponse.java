@@ -11,19 +11,19 @@ import java.time.LocalDateTime;
 public class SubscriptionResponse {
 
     private Long id;
-    private String userLoginId;
     private Long modelId;
     private String modelName;
     private String brandName;
+    private String imageUrl;
     private LocalDateTime createdAt;
 
     public static SubscriptionResponse from(Subscription subscription) {
         return new SubscriptionResponse(
             subscription.getId(),
-            subscription.getUser().getUserId(),
             subscription.getModel().getId(),
             subscription.getModel().getModelName(),
             subscription.getModel().getBrand().getBrandName(),
+            subscription.getModel().getImageUrl(),
             subscription.getCreatedAt()
         );
     }

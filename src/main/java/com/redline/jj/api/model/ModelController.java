@@ -1,8 +1,9 @@
 package com.redline.jj.api.model;
 
 import com.redline.jj.api.model.dto.ModelDetailResponse;
-import com.redline.jj.api.model.dto.ModelPageResponse;
+import com.redline.jj.api.model.dto.ModelResponse;
 import com.redline.jj.common.response.ApiResponse;
+import com.redline.jj.common.response.CursorPage;
 import com.redline.jj.domain.model.Model.ModelType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,7 @@ public class ModelController {
     private final ModelService modelService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<ModelPageResponse>> getModels(
+    public ResponseEntity<ApiResponse<CursorPage<ModelResponse>>> getModels(
             @RequestParam(required = false) List<Long> brandIds,
             @RequestParam(required = false) List<ModelType> types,
             @RequestParam(required = false) Long cursor,

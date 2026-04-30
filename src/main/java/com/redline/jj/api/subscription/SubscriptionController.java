@@ -4,6 +4,7 @@ import com.redline.jj.api.subscription.dto.SubscriptionRequest;
 import com.redline.jj.api.subscription.dto.SubscriptionResponse;
 import com.redline.jj.api.subscription.dto.SubscriptionTopResponse;
 import com.redline.jj.common.response.ApiResponse;
+import com.redline.jj.common.response.CursorPage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,22 +22,27 @@ public class SubscriptionController {
     private final SubscriptionService subscriptionService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<SubscriptionResponse>>> getMySubscriptions(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(ApiResponse.ok(subscriptionService.getMySubscriptions(userDetails.getUsername())));
+    public ResponseEntity<ApiResponse<CursorPage<SubscriptionResponse>>> getMySubscriptions(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(ApiResponse.ok(
+            subscriptionService.getMySubscriptions(userDetails.getUsername(), cursor, size)));
     }
 
     @GetMapping("/count")
     public ResponseEntity<ApiResponse<Long>> getMySubscriptionCount(
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(ApiResponse.ok(subscriptionService.getMySubscriptionCount(userDetails.getUsername())));
+        return ResponseEntity.ok(ApiResponse.ok(
+            subscriptionService.getMySubscriptionCount(userDetails.getUsername())));
     }
 
     @PostMapping
     public ResponseEntity<ApiResponse<SubscriptionResponse>> subscribe(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody SubscriptionRequest request) {
-        return ResponseEntity.ok(ApiResponse.ok(subscriptionService.subscribe(userDetails.getUsername(), request.getModelId())));
+        return ResponseEntity.ok(ApiResponse.ok(
+            subscriptionService.subscribe(userDetails.getUsername(), request.getModelId())));
     }
 
     @DeleteMapping("/{id}")
