@@ -154,7 +154,10 @@ class BatchSchedulerTest {
         verify(jobLauncher).run(eq(nestStoreCrawlingJob), any(JobParameters.class));
         verify(jobLauncher).run(eq(semiBasementCrawlingJob), any(JobParameters.class));
 
-        // then - 예외 발생 후에도 finally 블록에서 다음 스케줄이 등록되어야 한다
-        verify(taskScheduler).schedule(any(Runnable.class), any(Instant.class));
+        // then - 예외 발생 후에도 finally 블록에서 다음 스케줄이 등록되어야 한다 (existsAny=true → ACTIVE 딜레이)
+        ArgumentCaptor<Instant> captor = ArgumentCaptor.forClass(Instant.class);
+        verify(taskScheduler).schedule(any(Runnable.class), captor.capture());
+        assertThat(captor.getValue())
+            .isEqualTo(fixedClock.instant().plusMillis(BatchScheduler.DELAY_ACTIVE_MS));
     }
 }

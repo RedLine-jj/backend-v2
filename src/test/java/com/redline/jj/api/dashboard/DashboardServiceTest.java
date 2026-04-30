@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.mockito.ArgumentCaptor;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -198,19 +200,26 @@ class DashboardServiceTest {
         SiteOptionLog log1 = buildSiteOptionLog(1L, siteOption, "30/30", 85000, earlier);
         SiteOptionLog log2 = buildSiteOptionLog(2L, siteOption, "30/30", 89000, later);
 
+        ArgumentCaptor<LocalDateTime> sinceCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
+
         given(modelRepository.findById(1L)).willReturn(Optional.of(model));
-        given(siteOptionLogRepository.findByModelIdSince(eq(1L), any(LocalDateTime.class)))
+        given(siteOptionLogRepository.findByModelIdSince(eq(1L), sinceCaptor.capture()))
             .willReturn(List.of(log1, log2));
 
         // when
         PriceHistoryResponse result = dashboardService.getPriceHistory(1L, 30);
 
-        // then
+        // then — since 인자가 30일 이내인지 검증
+        LocalDateTime captured = sinceCaptor.getValue();
+        LocalDateTime expectedSince = LocalDateTime.now().minusDays(30);
+        assertThat(captured)
+            .isAfterOrEqualTo(expectedSince.minusSeconds(5))
+            .isBeforeOrEqualTo(LocalDateTime.now());
+
         assertThat(result.getHistories()).hasSize(1);
         List<PriceHistoryResponse.PricePoint> points = result.getHistories().get(0).points();
         assertThat(points).hasSize(2);
         assertThat(points.get(0).capturedAt()).isBefore(points.get(1).capturedAt());
-        verify(siteOptionLogRepository).findByModelIdSince(eq(1L), any(LocalDateTime.class));
     }
 
     @Test
