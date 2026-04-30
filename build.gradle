@@ -68,6 +68,9 @@ dependencies {
     // dotenv (.env 파일 로드)
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 
+    // Docker Compose (로컬 개발 시 컨테이너 자동 기동)
+    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
