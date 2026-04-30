@@ -49,7 +49,7 @@ public class DashboardService {
     }
 
     public List<RecentRestockResponse> getRecentRestocks() {
-        List<RestockNotification> notifications = restockNotificationRepository.findTop10WithModelOrderByCreatedAtDesc();
+        List<RestockNotification> notifications = restockNotificationRepository.findTop10ByOrderByCreatedAtDesc();
         return notifications.stream()
             .map(RecentRestockResponse::from)
             .toList();

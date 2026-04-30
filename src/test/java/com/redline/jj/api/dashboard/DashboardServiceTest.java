@@ -252,7 +252,7 @@ class DashboardServiceTest {
             .user(user)
             .build();
 
-        given(restockNotificationRepository.findTop10WithModelOrderByCreatedAtDesc())
+        given(restockNotificationRepository.findTop10ByOrderByCreatedAtDesc())
             .willReturn(List.of(n1, n2));
 
         // when
@@ -274,7 +274,7 @@ class DashboardServiceTest {
             notifications.add(RestockNotification.builder().id(i).model(model).user(user).build());
         }
 
-        given(restockNotificationRepository.findTop10WithModelOrderByCreatedAtDesc())
+        given(restockNotificationRepository.findTop10ByOrderByCreatedAtDesc())
             .willReturn(notifications);
 
         // when

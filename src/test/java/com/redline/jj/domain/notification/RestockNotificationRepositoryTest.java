@@ -63,12 +63,12 @@ class RestockNotificationRepositoryTest {
     }
 
     // =========================================================================
-    // findTop10WithModelOrderByCreatedAtDesc — JPQL LIMIT 10 실행 검증
+    // findTop10ByOrderByCreatedAtDesc — Top10 파생 쿼리 + @EntityGraph 검증
     // =========================================================================
 
     @Test
-    @DisplayName("findTop10WithModelOrderByCreatedAtDesc: 15건 저장 시 최신 10건만 반환")
-    void JPQL_LIMIT10_15건_저장_시_10건_반환() {
+    @DisplayName("findTop10ByOrderByCreatedAtDesc: 15건 저장 시 최신 10건만 반환하고 model·brand가 즉시 로딩된다")
+    void Top10_파생쿼리_15건_저장_시_10건_반환_및_연관관계_즉시로딩() {
         // given — 알림 15건 순서대로 저장
         for (int i = 0; i < 15; i++) {
             notificationRepository.save(
@@ -78,8 +78,8 @@ class RestockNotificationRepositoryTest {
         em.flush();
         em.clear();
 
-        // when — JPQL "LIMIT 10" 실행
-        List<RestockNotification> result = notificationRepository.findTop10WithModelOrderByCreatedAtDesc();
+        // when
+        List<RestockNotification> result = notificationRepository.findTop10ByOrderByCreatedAtDesc();
 
         // then
         assertThat(result).hasSize(10);

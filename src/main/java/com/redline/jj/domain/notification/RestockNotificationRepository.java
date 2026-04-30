@@ -1,5 +1,6 @@
 package com.redline.jj.domain.notification;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -13,8 +14,8 @@ public interface RestockNotificationRepository extends JpaRepository<RestockNoti
 
     List<RestockNotification> findByUser_IdOrderByCreatedAtDesc(Long userId);
 
-    @Query("SELECT n FROM RestockNotification n JOIN FETCH n.model m JOIN FETCH m.brand ORDER BY n.createdAt DESC LIMIT 10")
-    List<RestockNotification> findTop10WithModelOrderByCreatedAtDesc();
+    @EntityGraph(attributePaths = {"model", "model.brand"})
+    List<RestockNotification> findTop10ByOrderByCreatedAtDesc();
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE RestockNotification n SET n.read = true WHERE n.user.id = :userId AND n.read = false")
