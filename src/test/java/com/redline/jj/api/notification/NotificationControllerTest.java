@@ -132,7 +132,7 @@ class NotificationControllerTest {
     @DisplayName("GET /api/notifications 인증 성공 - 200, data 배열 반환")
     void getNotifications_인증_성공_200() throws Exception {
         NotificationResponse item = new NotificationResponse(
-            1L, 10L, "501", "리바이스", false, LocalDateTime.of(2026, 4, 1, 12, 0)
+            1L, 10L, "501", "리바이스", null, false, LocalDateTime.of(2026, 4, 1, 12, 0)
         );
         given(notificationService.getNotifications("testuser")).willReturn(List.of(item));
 

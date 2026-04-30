@@ -4,6 +4,7 @@ import com.redline.jj.api.option.dto.SiteOptionLogResponse;
 import com.redline.jj.api.option.dto.SiteOptionResponse;
 import com.redline.jj.common.exception.BusinessException;
 import com.redline.jj.common.exception.ErrorCode;
+import com.redline.jj.common.response.CursorPage;
 import com.redline.jj.domain.brand.Brand;
 import com.redline.jj.domain.model.Model;
 import com.redline.jj.domain.model.Model.ModelType;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +27,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -59,42 +63,46 @@ class SiteOptionServiceTest {
 
     @Test
     void listSiteOptions_siteId만_필터링() {
-        given(siteOptionRepository.search(1L, null, null)).willReturn(List.of(buildSiteOption(1L)));
+        given(siteOptionRepository.searchWithCursor(eq(1L), isNull(), isNull(), isNull(), any(Pageable.class)))
+            .willReturn(List.of(buildSiteOption(1L)));
 
-        List<SiteOptionResponse> result = siteOptionService.listSiteOptions(1L, null, null);
+        CursorPage<SiteOptionResponse> result = siteOptionService.listSiteOptions(1L, null, null, null, 20);
 
-        assertThat(result).hasSize(1);
-        verify(siteOptionRepository).search(1L, null, null);
+        assertThat(result.getContent()).hasSize(1);
+        verify(siteOptionRepository).searchWithCursor(eq(1L), isNull(), isNull(), isNull(), any(Pageable.class));
     }
 
     @Test
     void listSiteOptions_modelId만_필터링() {
-        given(siteOptionRepository.search(null, 2L, null)).willReturn(List.of(buildSiteOption(1L)));
+        given(siteOptionRepository.searchWithCursor(isNull(), eq(2L), isNull(), isNull(), any(Pageable.class)))
+            .willReturn(List.of(buildSiteOption(1L)));
 
-        List<SiteOptionResponse> result = siteOptionService.listSiteOptions(null, 2L, null);
+        CursorPage<SiteOptionResponse> result = siteOptionService.listSiteOptions(null, 2L, null, null, 20);
 
-        assertThat(result).hasSize(1);
-        verify(siteOptionRepository).search(null, 2L, null);
+        assertThat(result.getContent()).hasSize(1);
+        verify(siteOptionRepository).searchWithCursor(isNull(), eq(2L), isNull(), isNull(), any(Pageable.class));
     }
 
     @Test
-    void listSiteOptions_inStock만_필터링() {
-        given(siteOptionRepository.search(null, null, true)).willReturn(List.of(buildSiteOption(1L)));
+    void listSiteOptions_status만_필터링() {
+        given(siteOptionRepository.searchWithCursor(isNull(), isNull(), eq(true), isNull(), any(Pageable.class)))
+            .willReturn(List.of(buildSiteOption(1L)));
 
-        List<SiteOptionResponse> result = siteOptionService.listSiteOptions(null, null, true);
+        CursorPage<SiteOptionResponse> result = siteOptionService.listSiteOptions(null, null, true, null, 20);
 
-        assertThat(result).hasSize(1);
-        verify(siteOptionRepository).search(null, null, true);
+        assertThat(result.getContent()).hasSize(1);
+        verify(siteOptionRepository).searchWithCursor(isNull(), isNull(), eq(true), isNull(), any(Pageable.class));
     }
 
     @Test
     void listSiteOptions_전체필터_조합() {
-        given(siteOptionRepository.search(1L, 2L, true)).willReturn(List.of(buildSiteOption(1L)));
+        given(siteOptionRepository.searchWithCursor(eq(1L), eq(2L), eq(true), isNull(), any(Pageable.class)))
+            .willReturn(List.of(buildSiteOption(1L)));
 
-        List<SiteOptionResponse> result = siteOptionService.listSiteOptions(1L, 2L, true);
+        CursorPage<SiteOptionResponse> result = siteOptionService.listSiteOptions(1L, 2L, true, null, 20);
 
-        assertThat(result).hasSize(1);
-        verify(siteOptionRepository).search(1L, 2L, true);
+        assertThat(result.getContent()).hasSize(1);
+        verify(siteOptionRepository).searchWithCursor(eq(1L), eq(2L), eq(true), isNull(), any(Pageable.class));
     }
 
     @Test
@@ -105,7 +113,7 @@ class SiteOptionServiceTest {
 
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getOptionLabel()).isEqualTo("30인치");
-        assertThat(result.isInStock()).isTrue();
+        assertThat(result.isStatus()).isTrue();
     }
 
     @Test
@@ -120,30 +128,28 @@ class SiteOptionServiceTest {
 
     @Test
     void getLogs_없는id_SITE_OPTION_NOT_FOUND_예외() {
-        given(siteOptionLogRepository.findBySiteOption_IdOrderByCreatedAtDesc(999L))
-            .willReturn(List.of());
         given(siteOptionRepository.existsById(999L)).willReturn(false);
 
-        assertThatThrownBy(() -> siteOptionService.getLogs(999L))
+        assertThatThrownBy(() -> siteOptionService.getLogs(999L, null, 20))
             .isInstanceOf(BusinessException.class)
             .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
                 .isEqualTo(ErrorCode.SITE_OPTION_NOT_FOUND));
     }
 
     @Test
-    void getLogs_존재하고_로그없으면_빈리스트반환() {
-        given(siteOptionLogRepository.findBySiteOption_IdOrderByCreatedAtDesc(1L))
-            .willReturn(List.of());
+    void getLogs_존재하고_로그없으면_빈페이지반환() {
         given(siteOptionRepository.existsById(1L)).willReturn(true);
+        given(siteOptionLogRepository.findBySiteOptionWithCursor(eq(1L), isNull(), any(Pageable.class)))
+            .willReturn(List.of());
 
-        List<SiteOptionLogResponse> result = siteOptionService.getLogs(1L);
+        CursorPage<SiteOptionLogResponse> result = siteOptionService.getLogs(1L, null, 20);
 
-        assertThat(result).isEmpty();
+        assertThat(result.getContent()).isEmpty();
         verify(siteOptionRepository).existsById(1L);
     }
 
     @Test
-    void getLogs_로그있으면_existsById_미호출() {
+    void getLogs_로그있으면_응답반환() {
         SiteOption siteOption = buildSiteOption(1L);
         SiteOptionLog log = SiteOptionLog.builder()
             .id(10L)
@@ -154,14 +160,14 @@ class SiteOptionServiceTest {
             .inStock(true)
             .build();
 
-        given(siteOptionLogRepository.findBySiteOption_IdOrderByCreatedAtDesc(1L))
+        given(siteOptionRepository.existsById(1L)).willReturn(true);
+        given(siteOptionLogRepository.findBySiteOptionWithCursor(eq(1L), isNull(), any(Pageable.class)))
             .willReturn(List.of(log));
 
-        List<SiteOptionLogResponse> result = siteOptionService.getLogs(1L);
+        CursorPage<SiteOptionLogResponse> result = siteOptionService.getLogs(1L, null, 20);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getId()).isEqualTo(10L);
-        assertThat(result.get(0).getPrice()).isEqualTo(89000);
-        verify(siteOptionRepository, never()).existsById(any());
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getId()).isEqualTo(10L);
+        assertThat(result.getContent().get(0).getPrice()).isEqualTo(89000);
     }
 }

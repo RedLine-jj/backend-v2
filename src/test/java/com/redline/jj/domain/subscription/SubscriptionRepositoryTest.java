@@ -20,6 +20,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 
+import org.springframework.data.domain.PageRequest;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -133,12 +135,12 @@ class SubscriptionRepositoryTest {
     }
 
     // =========================================================================
-    // findByUser_UserId — N+1 검증 (model, brand JOIN FETCH)
+    // findByUserWithCursor — N+1 검증 (model, brand JOIN FETCH)
     // =========================================================================
 
     @Test
-    @DisplayName("findByUser_UserId: model과 brand가 JOIN FETCH되어 단일 SQL 쿼리로 로딩된다")
-    void findByUser_UserId_model과_brand가_즉시로딩된다() {
+    @DisplayName("findByUserWithCursor: model과 brand가 JOIN FETCH되어 단일 SQL 쿼리로 로딩된다")
+    void findByUserWithCursor_model과_brand가_즉시로딩된다() {
         subscriptionRepository.saveAndFlush(Subscription.builder().user(user).model(model).build());
         em.clear();
 
@@ -148,22 +150,21 @@ class SubscriptionRepositoryTest {
         stats.setStatisticsEnabled(true);
         stats.clear();
 
-        List<Subscription> results = subscriptionRepository.findByUser_UserId("testUser");
+        List<Subscription> results = subscriptionRepository.findByUserWithCursor("testUser", null, PageRequest.of(0, 100));
 
         assertThat(results).hasSize(1);
         Subscription sub = results.get(0);
         assertThat(sub.getModel().getModelName()).isEqualTo("501");
         assertThat(sub.getModel().getBrand().getBrandName()).isEqualTo("리바이스");
-        assertThat(sub.getUser().getUserId()).isEqualTo("testUser");
-        // JOIN FETCH가 올바르게 적용됐다면 SELECT 1회만 발생해야 한다
+        // model과 brand가 JOIN FETCH되어 SELECT 1회만 발생해야 한다
         assertThat(stats.getPrepareStatementCount()).isEqualTo(1);
 
         stats.setStatisticsEnabled(false);
     }
 
     @Test
-    @DisplayName("findByUser_UserId: 해당 user의 구독만 반환하고 다른 user 구독은 포함하지 않는다")
-    void findByUser_UserId_다른_유저의_구독은_반환하지_않는다() {
+    @DisplayName("findByUserWithCursor: 해당 user의 구독만 반환하고 다른 user 구독은 포함하지 않는다")
+    void findByUserWithCursor_다른_유저의_구독은_반환하지_않는다() {
         User anotherUser = userRepository.save(User.builder()
             .userId("anotherUser")
             .userPw("pw")
@@ -179,16 +180,16 @@ class SubscriptionRepositoryTest {
         subscriptionRepository.saveAndFlush(Subscription.builder().user(anotherUser).model(anotherModel).build());
         em.clear();
 
-        List<Subscription> results = subscriptionRepository.findByUser_UserId("testUser");
+        List<Subscription> results = subscriptionRepository.findByUserWithCursor("testUser", null, PageRequest.of(0, 100));
 
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getUser().getUserId()).isEqualTo("testUser");
     }
 
     @Test
-    @DisplayName("findByUser_UserId: 구독이 없는 user는 빈 리스트를 반환한다")
-    void findByUser_UserId_구독없는_유저는_빈리스트반환() {
-        List<Subscription> results = subscriptionRepository.findByUser_UserId("testUser");
+    @DisplayName("findByUserWithCursor: 구독이 없는 user는 빈 리스트를 반환한다")
+    void findByUserWithCursor_구독없는_유저는_빈리스트반환() {
+        List<Subscription> results = subscriptionRepository.findByUserWithCursor("testUser", null, PageRequest.of(0, 100));
 
         assertThat(results).isEmpty();
     }
@@ -224,7 +225,7 @@ class SubscriptionRepositoryTest {
     }
 
     @Test
-    @DisplayName("findTop10ModelsBySubscriptionCount: Projection의 modelId, modelName, brandName이 올바르게 매핑된다")
+    @DisplayName("findTop10ModelsBySubscriptionCount: Projection의 modelId, modelName, count가 올바르게 매핑된다")
     void findTop10_Projection_컬럼_매핑이_올바르다() {
         subscriptionRepository.saveAndFlush(Subscription.builder().user(user).model(model).build());
 
@@ -234,7 +235,7 @@ class SubscriptionRepositoryTest {
         ModelSubscriptionCount projection = result.get(0);
         assertThat(projection.getModelId()).isEqualTo(model.getId());
         assertThat(projection.getModelName()).isEqualTo("501");
-        assertThat(projection.getBrandName()).isEqualTo("리바이스");
+        assertThat(projection.getCount()).isEqualTo(1L);
     }
 
     @Test

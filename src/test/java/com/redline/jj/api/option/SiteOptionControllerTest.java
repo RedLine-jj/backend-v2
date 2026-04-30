@@ -4,6 +4,7 @@ import com.redline.jj.api.option.dto.SiteOptionLogResponse;
 import com.redline.jj.api.option.dto.SiteOptionResponse;
 import com.redline.jj.common.exception.BusinessException;
 import com.redline.jj.common.exception.ErrorCode;
+import com.redline.jj.common.response.CursorPage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -48,21 +49,23 @@ class SiteOptionControllerTest {
 
     @Test
     void getSiteOptions_필터파라미터_정상바인딩() throws Exception {
-        given(siteOptionService.listSiteOptions(eq(1L), eq(2L), eq(true)))
-            .willReturn(List.of());
+        CursorPage<SiteOptionResponse> page = CursorPage.of(List.of(), null, false);
+        given(siteOptionService.listSiteOptions(eq(1L), eq(2L), eq(true), isNull(), eq(20)))
+            .willReturn(page);
 
         mockMvc.perform(get("/api/site-options")
                 .param("siteId", "1")
                 .param("modelId", "2")
-                .param("inStock", "true"))
+                .param("status", "true"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true));
     }
 
     @Test
     void getSiteOptions_필터없으면_null전달() throws Exception {
-        given(siteOptionService.listSiteOptions(isNull(), isNull(), isNull()))
-            .willReturn(List.of());
+        CursorPage<SiteOptionResponse> page = CursorPage.of(List.of(), null, false);
+        given(siteOptionService.listSiteOptions(isNull(), isNull(), isNull(), isNull(), eq(20)))
+            .willReturn(page);
 
         mockMvc.perform(get("/api/site-options"))
             .andExpect(status().isOk())
@@ -82,11 +85,12 @@ class SiteOptionControllerTest {
 
     @Test
     void getLogs_정상반환() throws Exception {
-        given(siteOptionService.getLogs(1L)).willReturn(List.of());
+        CursorPage<SiteOptionLogResponse> page = CursorPage.of(List.of(), null, false);
+        given(siteOptionService.getLogs(eq(1L), isNull(), eq(20))).willReturn(page);
 
         mockMvc.perform(get("/api/site-options/1/logs"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data").isArray());
+            .andExpect(jsonPath("$.data").exists());
     }
 }
