@@ -62,7 +62,7 @@ class SemiBasementDetailParserTest {
         String url = server.url("/89/?idx=4340").toString();
         CrawledProduct result = parser.parse(url);
 
-        assertThat(result.brandName()).isEqualTo("Trophy Clothing");
+        assertThat(result.brandName()).isEqualTo("TROPHY CLOTHING");
         assertThat(result.modelName()).isEqualTo("Lot.1604 Waist Overall Dirt Denim");
         assertThat(result.siteModelName()).isEqualTo("Lot.1604 Waist Overall Dirt Denim");
         assertThat(result.optionLabel()).isEqualTo("30");
@@ -105,6 +105,43 @@ class SemiBasementDetailParserTest {
             .containsOnly(398000);
         assertThat(results).extracting(CrawledProduct::modelType)
             .containsOnly(ModelType.DENIM_PANTS);
+    }
+
+    @Test
+    @DisplayName("JSON-LD brand가 있으면 Semi Basement 기본값 대신 해당 브랜드를 사용한다")
+    void parseAll_JSONLDBrand_브랜드반환() {
+        String html = """
+            <html>
+                <head>
+                    <meta property="og:title" content="[ JP94407S ] S407XX 1942 WPB L-181 War Model / S-M사이즈 : Semi Basement General Store">
+                    <script type="application/ld+json">
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "Product",
+                        "name": "[ JP94407S ] S407XX 1942 WPB L-181 War Model / S-M사이즈",
+                        "brand": {"@type": "Brand", "name": "Jelado"}
+                    }
+                    </script>
+                </head>
+                <body>
+                    <div class="price">728,000원</div>
+                    <ul>
+                        <li>Size：36(S), 38(M)</li>
+                    </ul>
+                </body>
+            </html>
+            """;
+        server.enqueue(new MockResponse()
+            .setBody(html)
+            .addHeader("Content-Type", "text/html")
+            .setResponseCode(200));
+
+        List<CrawledProduct> results = parser.parseAll(server.url("/93/?idx=5310").toString());
+
+        assertThat(results).extracting(CrawledProduct::brandName)
+            .containsOnly("JELADO");
+        assertThat(results).extracting(CrawledProduct::modelType)
+            .containsOnly(ModelType.DENIM_JACKET);
     }
 
     @Test
@@ -152,7 +189,10 @@ class SemiBasementDetailParserTest {
             new CrawlerProperties.NestStore(null, List.of()),
             new CrawlerProperties.SemiBasement(
                 server.url("/").toString(),
-                List.of(new CrawlerProperties.Category(89, ModelType.DENIM_PANTS))
+                List.of(
+                    new CrawlerProperties.Category(89, ModelType.DENIM_PANTS),
+                    new CrawlerProperties.Category(93, ModelType.DENIM_JACKET)
+                )
             )
         );
     }

@@ -1,5 +1,7 @@
 package com.redline.jj.batch.crawler.semibasement;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.redline.jj.batch.crawler.DetailParser;
 import com.redline.jj.batch.crawler.dto.CrawledProduct;
 import com.redline.jj.common.exception.BusinessException;
@@ -13,6 +15,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +28,7 @@ public class SemiBasementDetailParser implements DetailParser {
     private static final Pattern SIZE_PATTERN = Pattern.compile(
         "Size\\s*[：:]\\s*(.*?)(?=\\s+(?:Color|Material)\\s*[：:]|$)"
     );
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final String baseUrl;
     private final List<CrawlerProperties.Category> categories;
@@ -51,8 +56,11 @@ public class SemiBasementDetailParser implements DetailParser {
                 .timeout(10_000)
                 .get();
 
+            JsonNode productJson = extractProductJson(doc);
             String modelName = extractModelName(doc);
-            String brandName = extractBrandName(doc).orElse("Semi Basement");
+            String brandName = extractBrandName(doc, productJson)
+                .map(this::normalizeBrandName)
+                .orElse("SEMI BASEMENT");
             Integer price = extractPrice(doc);
             boolean inStock = !doc.text().toUpperCase().contains("SOLDOUT")
                 && !doc.text().contains("품절");
@@ -76,6 +84,25 @@ public class SemiBasementDetailParser implements DetailParser {
             throw e;
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.CRAWLING_FAILED);
+        }
+    }
+
+    private JsonNode extractProductJson(Document doc) {
+        return doc.select("script[type=application/ld+json]")
+            .stream()
+            .map(Element::data)
+            .map(this::readJson)
+            .filter(Objects::nonNull)
+            .filter(json -> "Product".equals(json.path("@type").asText()))
+            .findFirst()
+            .orElse(null);
+    }
+
+    private JsonNode readJson(String json) {
+        try {
+            return OBJECT_MAPPER.readTree(json);
+        } catch (IOException e) {
+            return null;
         }
     }
 
@@ -116,9 +143,20 @@ public class SemiBasementDetailParser implements DetailParser {
             .orElseThrow(() -> new BusinessException(ErrorCode.CRAWLING_FAILED));
     }
 
-    private Optional<String> extractBrandName(Document doc) {
+    private Optional<String> extractBrandName(Document doc, JsonNode productJson) {
+        if (productJson != null) {
+            String brandName = productJson.path("brand").path("name").asText();
+            if (!brandName.isBlank()) {
+                return Optional.of(brandName.trim());
+            }
+        }
+
         return extractMetaContent(doc, "meta[property=product:brand], meta[name=brand]")
             .or(() -> selectText(doc, ".brand, .prod_brand, .shop_brand"));
+    }
+
+    private String normalizeBrandName(String brandName) {
+        return brandName.trim().toUpperCase(Locale.ROOT);
     }
 
     private Optional<String> selectText(Document doc, String selector) {
