@@ -340,7 +340,7 @@ class GroqLlmClientTest {
     // -----------------------------------------------------------------------
 
     private CrawledProduct buildProduct(String brandName, String modelName, String siteModelName) {
-        return new CrawledProduct(brandName, modelName, siteModelName, null, null, false, null);
+        return new CrawledProduct(brandName, modelName, siteModelName, null, null, false, null, null, null);
     }
 
     private String buildGroqResponse(String content) {

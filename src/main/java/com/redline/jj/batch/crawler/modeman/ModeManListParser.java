@@ -9,32 +9,40 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class ModeManListParser implements ListParser {
 
+    private static final List<Integer> CRAWL_CATEGORY_NOS = List.of(858, 263);
+
     private final String baseUrl;
 
     public ModeManListParser(@Value("${crawler.modeman.base-url}") String baseUrl) {
-        this.baseUrl = baseUrl;
+        this.baseUrl = baseUrl.replaceAll("/+$", "");
     }
 
     @Override
     public List<String> parseProductUrls(int page) throws BusinessException {
         try {
-            Document doc = Jsoup.connect(baseUrl + "/product/list.html?page=" + page)
-                    .userAgent("Mozilla/5.0")
-                    .get();
+            Set<String> urls = new LinkedHashSet<>();
+            for (Integer categoryNo : CRAWL_CATEGORY_NOS) {
+                Document doc = Jsoup.connect(baseUrl + "/product/list.html?cate_no="
+                                + categoryNo + "&page=" + page)
+                        .userAgent("Mozilla/5.0")
+                        .timeout(10_000)
+                        .get();
 
-            List<String> urls = doc.select("ul.prdList li a.name")
+                urls.addAll(doc.select("a[name^=anchorBoxName_]")
                     .stream()
                     .map(a -> a.attr("abs:href"))
                     .filter(href -> !href.isBlank())
-                    .toList();
+                    .toList());
+            }
 
-            return urls.isEmpty() ? Collections.emptyList() : urls;
+            return List.copyOf(urls);
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.CRAWLING_FAILED);
         }

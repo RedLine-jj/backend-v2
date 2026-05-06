@@ -61,7 +61,9 @@ public class SemiBasementDetailParser implements DetailParser {
             response.optionName() != null ? response.optionName() : "기본",
             response.price(),
             response.stockCount() != null && response.stockCount() > 0,
-            url
+            url,
+            null,
+            null
         );
     }
 }

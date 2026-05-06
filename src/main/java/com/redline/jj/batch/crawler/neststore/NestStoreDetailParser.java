@@ -60,7 +60,7 @@ public class NestStoreDetailParser implements DetailParser {
 
             boolean inStock = doc.selectFirst(".btn_soldout") == null;
 
-            return new CrawledProduct(brandName, modelName, siteModelName, optionLabel, price, inStock, url);
+            return new CrawledProduct(brandName, modelName, siteModelName, optionLabel, price, inStock, url, null, null);
 
         } catch (BusinessException e) {
             throw e;
