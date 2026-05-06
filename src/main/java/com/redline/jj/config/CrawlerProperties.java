@@ -7,10 +7,24 @@ import java.util.List;
 
 @ConfigurationProperties(prefix = "crawler")
 public record CrawlerProperties(
-    ModeMan modeMan
+    ModeMan modeMan,
+    NestStore nestStore,
+    SemiBasement semiBasement
 ) {
 
     public record ModeMan(
+        String baseUrl,
+        List<Category> categories
+    ) {
+    }
+
+    public record NestStore(
+        String baseUrl,
+        List<Category> categories
+    ) {
+    }
+
+    public record SemiBasement(
         String baseUrl,
         List<Category> categories
     ) {

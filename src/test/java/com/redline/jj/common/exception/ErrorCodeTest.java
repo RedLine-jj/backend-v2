@@ -13,8 +13,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ErrorCodeTest {
 
     @Test
-    void ErrorCode_총_개수는_18개다() {
-        assertThat(ErrorCode.values()).hasSize(22);
+    void ErrorCode_총_개수는_23개다() {
+        assertThat(ErrorCode.values()).hasSize(23);
     }
 
     @EnumSource(ErrorCode.class)
@@ -40,7 +40,8 @@ class ErrorCodeTest {
         "NOTIFICATION_NOT_FOUND,      404, N001",
         "NOTIFICATION_ACCESS_DENIED,  403, N002",
         "LLM_MATCHING_FAILED,   500, C001",
-        "CRAWLING_FAILED,       500, C002"
+        "CRAWLING_FAILED,       500, C002",
+        "EMPTY_CATEGORIES,      500, C005"
     })
     @ParameterizedTest
     void 신규_ErrorCode의_HttpStatus와_code가_명세와_일치한다(String name, int expectedStatus, String expectedCode) {

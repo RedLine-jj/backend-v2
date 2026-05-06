@@ -308,7 +308,9 @@ class ModeManDetailParserTest {
                     new CrawlerProperties.Category(858, ModelType.DENIM_PANTS),
                     new CrawlerProperties.Category(263, ModelType.DENIM_JACKET)
                 )
-            )
+            ),
+            new CrawlerProperties.NestStore(null, List.of()),
+            new CrawlerProperties.SemiBasement(null, List.of())
         );
     }
 }

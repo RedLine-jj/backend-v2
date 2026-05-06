@@ -1,60 +1,75 @@
 package com.redline.jj.batch.crawler.semibasement;
 
 import com.redline.jj.batch.crawler.ListParser;
-import com.redline.jj.batch.crawler.semibasement.dto.SemiBasementProductListResponse;
 import com.redline.jj.common.exception.BusinessException;
 import com.redline.jj.common.exception.ErrorCode;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
+import com.redline.jj.config.CrawlerProperties;
+import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-import java.util.Collections;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
+@Slf4j
 @Component
 public class SemiBasementListParser implements ListParser {
 
-    private final WebClient webClient;
+    private final String baseUrl;
+    private final List<Integer> categoryNos;
 
-    public SemiBasementListParser(
-        WebClient.Builder webClientBuilder,
-        @Value("${crawler.semibasement.base-url}") String baseUrl
-    ) {
-        this.webClient = webClientBuilder.baseUrl(baseUrl).build();
+    public SemiBasementListParser(CrawlerProperties crawlerProperties) {
+        this.baseUrl = crawlerProperties.semiBasement().baseUrl().replaceAll("/+$", "");
+        List<CrawlerProperties.Category> categories = crawlerProperties.semiBasement().categories();
+        if (categories == null || categories.isEmpty()) {
+            throw new BusinessException(ErrorCode.EMPTY_CATEGORIES);
+        }
+        this.categoryNos = categories.stream()
+            .map(CrawlerProperties.Category::categoryNo)
+            .toList();
     }
 
     @Override
     public List<String> parseProductUrls(int page) throws BusinessException {
-        SemiBasementProductListResponse response;
-        try {
-            response = webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                    .path("/api/v1/products")
-                    .queryParam("page", page)
-                    .queryParam("size", 50)
-                    .build())
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, clientResponse ->
-                    Mono.error(new BusinessException(ErrorCode.CRAWLING_FAILED)))
-                .bodyToMono(SemiBasementProductListResponse.class)
-                .timeout(Duration.ofSeconds(10))
-                .block();
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCode.CRAWLING_FAILED);
+        Set<String> urls = new LinkedHashSet<>();
+        boolean fetchFailed = false;
+        List<String> failureMessages = new ArrayList<>();
+
+        for (Integer categoryNo : categoryNos) {
+            try {
+                Document doc = Jsoup.connect(buildCategoryUrl(categoryNo, page))
+                    .userAgent("Mozilla/5.0")
+                    .timeout(10_000)
+                    .get();
+
+                urls.addAll(doc.select("a[href*='?idx=']")
+                    .stream()
+                    .map(a -> a.attr("abs:href"))
+                    .filter(href -> !href.isBlank())
+                    .toList());
+            } catch (IOException e) {
+                fetchFailed = true;
+                failureMessages.add("categoryNo=" + categoryNo + ", message=" + e.getMessage());
+                log.warn("SemiBasement 카테고리 목록 크롤링 실패: categoryNo={}, page={}", categoryNo, page, e);
+            }
         }
 
-        if (response == null || response.data() == null || response.data().isEmpty()) {
-            return Collections.emptyList();
+        if (urls.isEmpty() && fetchFailed) {
+            String detailMessage = "SemiBasement 상품 URL 수집 실패: page=" + page
+                + ", failures=" + String.join("; ", failureMessages);
+            throw new BusinessException(ErrorCode.CRAWLING_FAILED, detailMessage);
         }
+        return List.copyOf(urls);
+    }
 
-        return response.data().stream()
-            .map(SemiBasementProductListResponse.SemiBasementProductItem::productUrl)
-            .filter(u -> u != null && !u.trim().isBlank())
-            .toList();
+    private String buildCategoryUrl(int categoryNo, int page) {
+        if (page <= 1) {
+            return baseUrl + "/" + categoryNo;
+        }
+        return baseUrl + "/" + categoryNo + "?page=" + page;
     }
 }

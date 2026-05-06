@@ -50,8 +50,18 @@ crawler:
         model-type: DENIM_JACKET
   neststore:
     base-url: https://neststore.co.kr
+    categories:
+      - category-no: 34
+        model-type: DENIM_PANTS
+      - category-no: 230
+        model-type: DENIM_JACKET
   semibasement:
     base-url: https://semibasement.com
+    categories:
+      - category-no: 89
+        model-type: DENIM_PANTS
+      - category-no: 93
+        model-type: DENIM_JACKET
 
 groq:
   api-key: ${GROQ_API_KEY}

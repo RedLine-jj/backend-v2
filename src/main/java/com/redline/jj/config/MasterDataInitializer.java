@@ -6,8 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -33,7 +33,6 @@ public class MasterDataInitializer implements ApplicationRunner {
     }
 
     @Override
-    @Transactional
     public void run(ApplicationArguments args) {
         seedSites();
     }
@@ -46,16 +45,17 @@ public class MasterDataInitializer implements ApplicationRunner {
         );
 
         for (SiteSeed site : sites) {
-            if (siteRepository.existsBySiteName(site.siteName())) {
-                continue;
-            }
-
             String normalizedSiteLink = normalizeUrl(site.siteLink());
-            siteRepository.save(Site.builder()
-                .siteName(site.siteName())
-                .siteLink(normalizedSiteLink)
-                .build());
-            log.info("사이트 마스터 데이터 생성: siteName={}, siteLink={}", site.siteName(), normalizedSiteLink);
+            try {
+                siteRepository.saveAndFlush(Site.builder()
+                    .siteName(site.siteName())
+                    .siteLink(normalizedSiteLink)
+                    .build());
+                log.info("사이트 마스터 데이터 생성: siteName={}, siteLink={}", site.siteName(), normalizedSiteLink);
+            } catch (DataIntegrityViolationException e) {
+                log.info("이미 존재하는 사이트 마스터 데이터 건너뜀: siteName={}, siteLink={}",
+                    site.siteName(), normalizedSiteLink);
+            }
         }
     }
 

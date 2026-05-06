@@ -1,6 +1,8 @@
 package com.redline.jj.batch.crawler;
 
 import com.redline.jj.batch.crawler.modeman.ModeManListParser;
+import com.redline.jj.common.exception.BusinessException;
+import com.redline.jj.common.exception.ErrorCode;
 import com.redline.jj.config.CrawlerProperties;
 import com.redline.jj.domain.model.Model.ModelType;
 import okhttp3.mockwebserver.MockResponse;
@@ -14,6 +16,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ModeManListParserTest {
 
@@ -57,6 +60,33 @@ class ModeManListParserTest {
         assertThat(server.takeRequest().getPath()).isEqualTo("/product/list.html?cate_no=263&page=3");
     }
 
+    @Test
+    @DisplayName("카테고리 설정이 비어 있으면 생성 시 실패한다")
+    void constructor_카테고리없음_실패() {
+        CrawlerProperties properties = new CrawlerProperties(
+            new CrawlerProperties.ModeMan(server.url("/").toString(), List.of()),
+            new CrawlerProperties.NestStore(null, List.of()),
+            new CrawlerProperties.SemiBasement(null, List.of())
+        );
+
+        assertThatThrownBy(() -> new ModeManListParser(properties))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.EMPTY_CATEGORIES);
+    }
+
+    @Test
+    @DisplayName("일부 카테고리 fetch 실패 후 수집 URL이 없으면 크롤링 실패로 처리한다")
+    void parseProductUrls_부분실패_URL없음_실패() {
+        server.enqueue(new MockResponse().setBody("<html><body></body></html>"));
+        server.enqueue(new MockResponse().setResponseCode(500).setBody("server error"));
+
+        assertThatThrownBy(() -> parser.parseProductUrls(1))
+            .isInstanceOf(BusinessException.class)
+            .extracting("errorCode")
+            .isEqualTo(ErrorCode.CRAWLING_FAILED);
+    }
+
     private CrawlerProperties buildProperties() {
         return new CrawlerProperties(
             new CrawlerProperties.ModeMan(
@@ -65,7 +95,9 @@ class ModeManListParserTest {
                     new CrawlerProperties.Category(858, ModelType.DENIM_PANTS),
                     new CrawlerProperties.Category(263, ModelType.DENIM_JACKET)
                 )
-            )
+            ),
+            new CrawlerProperties.NestStore(null, List.of()),
+            new CrawlerProperties.SemiBasement(null, List.of())
         );
     }
 }

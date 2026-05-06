@@ -10,6 +10,7 @@ import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,7 +24,11 @@ public class ModeManListParser implements ListParser {
 
     public ModeManListParser(CrawlerProperties crawlerProperties) {
         this.baseUrl = crawlerProperties.modeMan().baseUrl().replaceAll("/+$", "");
-        this.categoryNos = crawlerProperties.modeMan().categories().stream()
+        List<CrawlerProperties.Category> categories = crawlerProperties.modeMan().categories();
+        if (categories == null || categories.isEmpty()) {
+            throw new BusinessException(ErrorCode.EMPTY_CATEGORIES);
+        }
+        this.categoryNos = categories.stream()
             .map(CrawlerProperties.Category::categoryNo)
             .toList();
     }
@@ -31,8 +36,8 @@ public class ModeManListParser implements ListParser {
     @Override
     public List<String> parseProductUrls(int page) throws BusinessException {
         Set<String> urls = new LinkedHashSet<>();
-        boolean fetchSucceeded = false;
         boolean fetchFailed = false;
+        List<String> failureMessages = new ArrayList<>();
 
         for (Integer categoryNo : categoryNos) {
             try {
@@ -41,7 +46,6 @@ public class ModeManListParser implements ListParser {
                         .userAgent("Mozilla/5.0")
                         .timeout(10_000)
                         .get();
-                fetchSucceeded = true;
 
                 urls.addAll(doc.select("a[name^=anchorBoxName_]")
                     .stream()
@@ -50,12 +54,15 @@ public class ModeManListParser implements ListParser {
                     .toList());
             } catch (IOException e) {
                 fetchFailed = true;
+                failureMessages.add("categoryNo=" + categoryNo + ", message=" + e.getMessage());
                 log.warn("ModeMan 카테고리 목록 크롤링 실패: categoryNo={}, page={}", categoryNo, page, e);
             }
         }
 
-        if (urls.isEmpty() && !fetchSucceeded && fetchFailed) {
-            throw new BusinessException(ErrorCode.CRAWLING_FAILED);
+        if (urls.isEmpty() && fetchFailed) {
+            String detailMessage = "ModeMan 상품 URL 수집 실패: page=" + page
+                + ", failures=" + String.join("; ", failureMessages);
+            throw new BusinessException(ErrorCode.CRAWLING_FAILED, detailMessage);
         }
         return List.copyOf(urls);
     }
