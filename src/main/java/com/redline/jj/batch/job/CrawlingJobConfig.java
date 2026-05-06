@@ -18,12 +18,15 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -59,7 +62,7 @@ public class CrawlingJobConfig {
 
     @Bean("modeManCrawlingStep")
     public Step modeManCrawlingStep(@Qualifier("modeManCrawlReader") ItemReader<String> reader,
-                                    @Qualifier("modeManProcessor") ItemProcessor<String, ResolvedItem> processor) {
+                                    @Qualifier("modeManProcessor") ItemProcessor<String, List<ResolvedItem>> processor) {
         return buildStep(SiteDescriptor.of("modeMan"), reader, processor);
     }
 
@@ -84,7 +87,7 @@ public class CrawlingJobConfig {
 
     @Bean("nestStoreCrawlingStep")
     public Step nestStoreCrawlingStep(@Qualifier("nestStoreCrawlReader") ItemReader<String> reader,
-                                      @Qualifier("nestStoreProcessor") ItemProcessor<String, ResolvedItem> processor) {
+                                      @Qualifier("nestStoreProcessor") ItemProcessor<String, List<ResolvedItem>> processor) {
         return buildStep(SiteDescriptor.of("nestStore"), reader, processor);
     }
 
@@ -109,7 +112,7 @@ public class CrawlingJobConfig {
 
     @Bean("semiBasementCrawlingStep")
     public Step semiBasementCrawlingStep(@Qualifier("semiBasementCrawlReader") ItemReader<String> reader,
-                                         @Qualifier("semiBasementProcessor") ItemProcessor<String, ResolvedItem> processor) {
+                                         @Qualifier("semiBasementProcessor") ItemProcessor<String, List<ResolvedItem>> processor) {
         return buildStep(SiteDescriptor.of("semiBasement"), reader, processor);
     }
 
@@ -134,17 +137,25 @@ public class CrawlingJobConfig {
     }
 
     private Step buildStep(SiteDescriptor site, ItemReader<String> reader,
-                           ItemProcessor<String, ResolvedItem> processor) {
+                           ItemProcessor<String, List<ResolvedItem>> processor) {
         return new StepBuilder(site.stepBeanName(), jobRepository)
-            .<String, ResolvedItem>chunk(10, transactionManager)
+            .<String, List<ResolvedItem>>chunk(10, transactionManager)
             .reader(reader)
             .processor(processor)
-            .writer(dbSnapshotWriter)
+            .writer(items -> dbSnapshotWriter.write(flatten(items)))
             .faultTolerant()
             .skipPolicy(new CrawlingSkipPolicy())
             .retryLimit(3)
             .retry(WebClientRequestException.class)
             .build();
+    }
+
+    private Chunk<ResolvedItem> flatten(Chunk<? extends List<ResolvedItem>> items) {
+        Chunk<ResolvedItem> flattened = new Chunk<>();
+        for (List<ResolvedItem> item : items) {
+            flattened.addAll(item);
+        }
+        return flattened;
     }
 
     private ModelResolutionProcessor buildProcessor(DetailParser detailParser, String siteName) {

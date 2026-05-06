@@ -9,8 +9,7 @@ import java.util.Set;
 public class CrawlingSkipPolicy implements SkipPolicy {
 
     private static final Set<ErrorCode> SKIPPABLE = Set.of(
-        ErrorCode.CRAWLING_FAILED,
-        ErrorCode.NOT_FOUND
+        ErrorCode.CRAWLING_FAILED
     );
 
     @Override

@@ -46,4 +46,16 @@ public class Model extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private ModelType modelType;
+
+    public void updateImageUrlIfAbsent(String imageUrl) {
+        if (this.imageUrl == null && imageUrl != null && !imageUrl.isBlank()) {
+            this.imageUrl = imageUrl;
+        }
+    }
+
+    public void updateModelTypeIfAbsent(ModelType modelType) {
+        if (this.modelType == null && modelType != null) {
+            this.modelType = modelType;
+        }
+    }
 }

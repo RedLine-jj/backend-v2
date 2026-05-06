@@ -34,7 +34,8 @@ public enum ErrorCode {
     LLM_MATCHING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "C001", "LLM 매칭에 실패했습니다."),
     CRAWLING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "C002", "크롤링 처리에 실패했습니다."),
     UNSUPPORTED_SITE(HttpStatus.BAD_REQUEST, "C003", "지원하지 않는 사이트입니다."),
-    LAUNCH_FAILURE(HttpStatus.INTERNAL_SERVER_ERROR, "C004", "배치 잡 실행에 실패했습니다.");
+    LAUNCH_FAILURE(HttpStatus.INTERNAL_SERVER_ERROR, "C004", "배치 잡 실행에 실패했습니다."),
+    EMPTY_CATEGORIES(HttpStatus.INTERNAL_SERVER_ERROR, "C005", "크롤링 카테고리 설정이 비어 있습니다.");
 
     private final HttpStatus status;
     private final String code;

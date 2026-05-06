@@ -11,7 +11,9 @@ import com.redline.jj.domain.site.Site;
 import com.redline.jj.domain.site.SiteRepository;
 import org.springframework.batch.item.ItemProcessor;
 
-public class ModelResolutionProcessor implements ItemProcessor<String, ResolvedItem> {
+import java.util.List;
+
+public class ModelResolutionProcessor implements ItemProcessor<String, List<ResolvedItem>> {
 
     private final DetailParser detailParser;
     private final ModelResolutionService modelResolutionService;
@@ -31,14 +33,19 @@ public class ModelResolutionProcessor implements ItemProcessor<String, ResolvedI
     }
 
     @Override
-    public ResolvedItem process(String url) {
-        CrawledProduct product = detailParser.parse(url);
+    public List<ResolvedItem> process(String url) {
+        List<CrawledProduct> products = detailParser.parseAll(url);
         Site site = resolveSite();
-        Model model = modelResolutionService.resolve(product);
-        return new ResolvedItem(
-            model, site, product.optionLabel(), product.price(),
-            product.inStock(), url, product.siteModelName()
-        );
+
+        return products.stream()
+            .map(product -> {
+                Model model = modelResolutionService.resolve(product);
+                return new ResolvedItem(
+                    model, site, product.optionLabel(), product.price(),
+                    product.inStock(), product.url(), product.siteModelName()
+                );
+            })
+            .toList();
     }
 
     private Site resolveSite() {

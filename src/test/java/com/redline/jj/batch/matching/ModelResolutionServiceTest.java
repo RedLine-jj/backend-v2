@@ -6,9 +6,12 @@ import com.redline.jj.domain.brand.BrandAlias;
 import com.redline.jj.domain.brand.BrandAliasRepository;
 import com.redline.jj.domain.brand.BrandRepository;
 import com.redline.jj.domain.model.Model;
+import com.redline.jj.domain.model.Model.ModelType;
 import com.redline.jj.domain.model.ModelAlias;
 import com.redline.jj.domain.model.ModelAliasRepository;
 import com.redline.jj.domain.model.ModelRepository;
+import com.redline.jj.common.exception.BusinessException;
+import com.redline.jj.common.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -121,6 +125,132 @@ class ModelResolutionServiceTest {
 
         verify(modelRepository, times(1)).save(any(Model.class));
         assertThat(result.getId()).isEqualTo(99L);
+    }
+
+    @Test
+    @DisplayName("신규 Model 저장 시 이미지 URL을 함께 저장한다")
+    void resolve_신규Model저장_imageUrl저장() {
+        when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(llmMatchClient.match(any())).thenReturn(Optional.empty());
+        Brand brand = Brand.builder().brandName("모드만").build();
+        when(brandRepository.findByBrandName("모드만")).thenReturn(Optional.of(brand));
+        ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
+        when(modelRepository.save(modelCaptor.capture())).thenAnswer(i -> i.getArgument(0));
+
+        service.resolve(buildProduct(
+            "모드만",
+            "신규모델",
+            "신규모델사이트명",
+            "https://mode-man.com/web/product/big/sample.jpg"
+        ));
+
+        assertThat(modelCaptor.getValue().getImageUrl())
+            .isEqualTo("https://mode-man.com/web/product/big/sample.jpg");
+    }
+
+    @Test
+    @DisplayName("신규 Model 저장 시 타입을 함께 저장한다")
+    void resolve_신규Model저장_modelType저장() {
+        when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(llmMatchClient.match(any())).thenReturn(Optional.empty());
+        Brand brand = Brand.builder().brandName("모드만").build();
+        when(brandRepository.findByBrandName("모드만")).thenReturn(Optional.of(brand));
+        ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
+        when(modelRepository.save(modelCaptor.capture())).thenAnswer(i -> i.getArgument(0));
+
+        service.resolve(new CrawledProduct(
+            "모드만",
+            "신규모델",
+            "신규모델사이트명",
+            null,
+            null,
+            false,
+            null,
+            null,
+            ModelType.DENIM_JACKET
+        ));
+
+        assertThat(modelCaptor.getValue().getModelType()).isEqualTo(ModelType.DENIM_JACKET);
+    }
+
+    @Test
+    @DisplayName("기존 Model의 타입이 비어 있으면 크롤링 타입으로 채운다")
+    void resolve_기존Model_modelType없음_업데이트() {
+        Model model = buildModel(1L, "모드만", "101 데님 재킷");
+        when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(modelRepository.findByBrand_BrandNameAndModelName("모드만", "101 데님 재킷"))
+                .thenReturn(Optional.of(model));
+
+        service.resolve(new CrawledProduct(
+            "모드만",
+            "101 데님 재킷",
+            "101 데님 재킷",
+            null,
+            null,
+            false,
+            null,
+            null,
+            ModelType.DENIM_JACKET
+        ));
+
+        assertThat(model.getModelType()).isEqualTo(ModelType.DENIM_JACKET);
+    }
+
+    @Test
+    @DisplayName("기존 Model의 이미지 URL이 비어 있으면 크롤링 이미지로 채운다")
+    void resolve_기존Model_imageUrl없음_업데이트() {
+        Model model = buildModel(1L, "모드만", "101 슬림 데님");
+        when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(modelRepository.findByBrand_BrandNameAndModelName("모드만", "101 슬림 데님"))
+                .thenReturn(Optional.of(model));
+
+        service.resolve(buildProduct(
+            "모드만",
+            "101 슬림 데님",
+            "101 슬림 데님",
+            "https://mode-man.com/web/product/big/sample.jpg"
+        ));
+
+        assertThat(model.getImageUrl()).isEqualTo("https://mode-man.com/web/product/big/sample.jpg");
+    }
+
+    @Test
+    @DisplayName("LLM API 오류 시 원시 문자열로 신규 Model 저장")
+    void resolve_LLM_API오류_신규Model저장() {
+        when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(llmMatchClient.match(any()))
+                .thenThrow(new BusinessException(ErrorCode.LLM_MATCHING_FAILED));
+        Brand brand = Brand.builder().brandName("모드만").build();
+        when(brandRepository.findByBrandName("모드만")).thenReturn(Optional.of(brand));
+        Model newModel = buildModel(98L, "모드만", "신규모델");
+        when(modelRepository.save(any())).thenReturn(newModel);
+
+        Model result = service.resolve(buildProduct("모드만", "신규모델", "신규모델사이트명"));
+
+        verify(modelRepository, times(1)).save(any(Model.class));
+        assertThat(result.getId()).isEqualTo(98L);
+    }
+
+    @Test
+    @DisplayName("LLM 외 BusinessException은 신규 Model 저장 없이 전파")
+    void resolve_LLM외_BusinessException_저장없이전파() {
+        when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(llmMatchClient.match(any()))
+                .thenThrow(new BusinessException(ErrorCode.CRAWLING_FAILED));
+
+        assertThatThrownBy(() -> service.resolve(buildProduct("모드만", "신규모델", "신규모델사이트명")))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.CRAWLING_FAILED);
+        verify(modelRepository, never()).save(any(Model.class));
     }
 
     @Test
@@ -296,6 +426,10 @@ class ModelResolutionServiceTest {
     }
 
     private CrawledProduct buildProduct(String brandName, String modelName, String siteModelName) {
-        return new CrawledProduct(brandName, modelName, siteModelName, null, null, false, null);
+        return new CrawledProduct(brandName, modelName, siteModelName, null, null, false, null, null, null);
+    }
+
+    private CrawledProduct buildProduct(String brandName, String modelName, String siteModelName, String imageUrl) {
+        return new CrawledProduct(brandName, modelName, siteModelName, null, null, false, null, imageUrl, null);
     }
 }

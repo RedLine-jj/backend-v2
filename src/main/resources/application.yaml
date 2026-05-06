@@ -40,6 +40,29 @@ jwt:
   access-token-expiration: 1800000
   refresh-token-expiration: 604800000
 
+crawler:
+  modeman:
+    base-url: https://mode-man.com
+    categories:
+      - category-no: 858
+        model-type: DENIM_PANTS
+      - category-no: 263
+        model-type: DENIM_JACKET
+  neststore:
+    base-url: https://neststore.co.kr
+    categories:
+      - category-no: 34
+        model-type: DENIM_PANTS
+      - category-no: 230
+        model-type: DENIM_JACKET
+  semibasement:
+    base-url: https://semibasement.com
+    categories:
+      - category-no: 89
+        model-type: DENIM_PANTS
+      - category-no: 93
+        model-type: DENIM_JACKET
+
 groq:
   api-key: ${GROQ_API_KEY}
   base-url: ${GROQ_BASE_URL:https://api.groq.com/openai/v1/chat/completions}
