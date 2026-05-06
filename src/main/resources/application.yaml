@@ -42,11 +42,16 @@ jwt:
 
 crawler:
   modeman:
+    base-url: https://mode-man.com
     categories:
       - category-no: 858
         model-type: DENIM_PANTS
       - category-no: 263
         model-type: DENIM_JACKET
+  neststore:
+    base-url: https://neststore.co.kr
+  semibasement:
+    base-url: https://semibasement.com
 
 groq:
   api-key: ${GROQ_API_KEY}

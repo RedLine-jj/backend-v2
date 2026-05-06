@@ -26,6 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -234,6 +235,22 @@ class ModelResolutionServiceTest {
 
         verify(modelRepository, times(1)).save(any(Model.class));
         assertThat(result.getId()).isEqualTo(98L);
+    }
+
+    @Test
+    @DisplayName("LLM 외 BusinessException은 신규 Model 저장 없이 전파")
+    void resolve_LLM외_BusinessException_저장없이전파() {
+        when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(llmMatchClient.match(any()))
+                .thenThrow(new BusinessException(ErrorCode.CRAWLING_FAILED));
+
+        assertThatThrownBy(() -> service.resolve(buildProduct("모드만", "신규모델", "신규모델사이트명")))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.CRAWLING_FAILED);
+        verify(modelRepository, never()).save(any(Model.class));
     }
 
     @Test

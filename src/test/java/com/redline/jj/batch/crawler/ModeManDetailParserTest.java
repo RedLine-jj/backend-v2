@@ -186,6 +186,85 @@ class ModeManDetailParserTest {
     }
 
     @Test
+    @DisplayName("잘못된 JSON-LD는 건너뛰고 Product JSON-LD를 파싱한다")
+    void parse_잘못된JSONLD_건너뜀() {
+        String html = """
+            <html><body>
+                <script type="application/ld+json">{ invalid json }</script>
+                <script type="application/ld+json">
+                {
+                    "@type": "Product",
+                    "name": "101 슬림 데님",
+                    "brand": { "name": "LEVI&#039;S" },
+                    "offers": [{ "name": "101 슬림 데님 S", "price": 89000 }]
+                }
+                </script>
+                <strong id="span_product_price_text">89,000원</strong>
+            </body></html>
+            """;
+
+        server.enqueue(new MockResponse().setBody(html).setResponseCode(200));
+        String url = server.url("/product/detail.html?cate_no=858").toString();
+
+        CrawledProduct result = parser.parse(url);
+
+        assertThat(result.brandName()).isEqualTo("LEVI'S");
+        assertThat(result.modelName()).isEqualTo("101 슬림 데님");
+        assertThat(result.price()).isEqualTo(89000);
+    }
+
+    @Test
+    @DisplayName("offer availability가 비어 있으면 DOM 품절 표시를 따른다")
+    void parseAll_offerAvailability없음_DOM품절표시적용() {
+        String html = """
+            <html><body>
+                <script type="application/ld+json">
+                {
+                    "@type": "Product",
+                    "name": "101 슬림 데님",
+                    "brand": { "name": "LEVI&#039;S" },
+                    "offers": [{ "name": "101 슬림 데님 S", "price": 89000 }]
+                }
+                </script>
+                <div class="soldOut">품절</div>
+            </body></html>
+            """;
+
+        server.enqueue(new MockResponse().setBody(html).setResponseCode(200));
+        String url = server.url("/product/detail.html?cate_no=858").toString();
+
+        List<CrawledProduct> results = parser.parseAll(url);
+
+        assertThat(results).singleElement()
+            .extracting(CrawledProduct::inStock)
+            .isEqualTo(false);
+    }
+
+    @Test
+    @DisplayName("cate_no는 숫자 접두사가 아닌 정확한 카테고리 번호만 매칭한다")
+    void parse_cateNo숫자접두사_매칭하지않음() {
+        String html = """
+            <html><body>
+                <script type="application/ld+json">
+                {
+                    "@type": "Product",
+                    "name": "101 슬림 데님",
+                    "brand": { "name": "LEVI&#039;S" },
+                    "offers": [{ "name": "101 슬림 데님 S", "price": 89000 }]
+                }
+                </script>
+            </body></html>
+            """;
+
+        server.enqueue(new MockResponse().setBody(html).setResponseCode(200));
+        String url = server.url("/product/detail.html?cate_no=8588").toString();
+
+        CrawledProduct result = parser.parse(url);
+
+        assertThat(result.modelType()).isNull();
+    }
+
+    @Test
     @DisplayName("soldOut div가 있는 HTML 파싱 시 inStock이 false이다")
     void parse_품절HTML_inStockFalse() throws IOException {
         String html = "<html><body>"

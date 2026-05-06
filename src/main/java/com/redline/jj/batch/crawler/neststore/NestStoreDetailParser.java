@@ -59,13 +59,38 @@ public class NestStoreDetailParser implements DetailParser {
             }
 
             boolean inStock = doc.selectFirst(".btn_soldout") == null;
+            String imageUrl = extractImageUrl(doc);
 
-            return new CrawledProduct(brandName, modelName, siteModelName, optionLabel, price, inStock, url, null, null);
+            return new CrawledProduct(
+                brandName,
+                modelName,
+                siteModelName,
+                optionLabel,
+                price,
+                inStock,
+                url,
+                imageUrl,
+                null // TODO: NestStore 카테고리-타입 매핑이 정리되면 ModelResolutionService 입력으로 전달한다.
+            );
 
         } catch (BusinessException e) {
             throw e;
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.CRAWLING_FAILED);
         }
+    }
+
+    private String extractImageUrl(Document doc) {
+        Element imageEl = doc.selectFirst("meta[property=og:image], meta[name=twitter:image]");
+        if (imageEl != null && !imageEl.attr("content").isBlank()) {
+            return imageEl.attr("abs:content");
+        }
+
+        imageEl = doc.selectFirst(".keyImg img, .thumbnail img, img.BigImage");
+        if (imageEl == null) {
+            return null;
+        }
+        String imageUrl = imageEl.attr("abs:src");
+        return imageUrl.isBlank() ? null : imageUrl;
     }
 }

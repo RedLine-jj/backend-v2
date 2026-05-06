@@ -50,11 +50,12 @@ public class MasterDataInitializer implements ApplicationRunner {
                 continue;
             }
 
+            String normalizedSiteLink = normalizeUrl(site.siteLink());
             siteRepository.save(Site.builder()
                 .siteName(site.siteName())
-                .siteLink(normalizeUrl(site.siteLink()))
+                .siteLink(normalizedSiteLink)
                 .build());
-            log.info("사이트 마스터 데이터 생성: siteName={}, siteLink={}", site.siteName(), site.siteLink());
+            log.info("사이트 마스터 데이터 생성: siteName={}, siteLink={}", site.siteName(), normalizedSiteLink);
         }
     }
 

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class ModeManDetailParser implements DetailParser {
@@ -68,6 +69,7 @@ public class ModeManDetailParser implements DetailParser {
                 .stream()
                 .map(Element::data)
                 .map(this::readJson)
+                .filter(Objects::nonNull)
                 .filter(json -> "Product".equals(json.path("@type").asText()))
                 .findFirst()
                 .orElse(null);
@@ -77,7 +79,7 @@ public class ModeManDetailParser implements DetailParser {
         try {
             return OBJECT_MAPPER.readTree(json);
         } catch (IOException e) {
-            throw new BusinessException(ErrorCode.CRAWLING_FAILED);
+            return null;
         }
     }
 
@@ -128,7 +130,7 @@ public class ModeManDetailParser implements DetailParser {
         for (JsonNode offer : offers) {
             String optionLabel = extractOfferOptionLabel(productJson, offer);
             Integer price = extractOfferPrice(offer, fallbackPrice);
-            boolean inStock = extractOfferInStock(offer);
+            boolean inStock = extractOfferInStock(offer, doc);
             String offerUrl = offer.path("url").asText();
 
             products.add(new CrawledProduct(
@@ -155,7 +157,20 @@ public class ModeManDetailParser implements DetailParser {
     }
 
     private boolean containsCategoryNo(String url, int categoryNo) {
-        return url.contains("/category/" + categoryNo + "/") || url.contains("cate_no=" + categoryNo);
+        return url.contains("/category/" + categoryNo + "/") || containsCategoryNoQueryParam(url, categoryNo);
+    }
+
+    private boolean containsCategoryNoQueryParam(String url, int categoryNo) {
+        String token = "cate_no=" + categoryNo;
+        int index = url.indexOf(token);
+        while (index >= 0) {
+            int nextIndex = index + token.length();
+            if (nextIndex >= url.length() || !Character.isDigit(url.charAt(nextIndex))) {
+                return true;
+            }
+            index = url.indexOf(token, index + 1);
+        }
+        return false;
     }
 
     private String extractImageUrl(JsonNode productJson) {
@@ -192,9 +207,12 @@ public class ModeManDetailParser implements DetailParser {
         return fallbackPrice;
     }
 
-    private boolean extractOfferInStock(JsonNode offer) {
+    private boolean extractOfferInStock(JsonNode offer, Document doc) {
         String availability = offer.path("availability").asText();
-        return availability.isBlank() || availability.endsWith("InStock");
+        if (availability.isBlank()) {
+            return !isSoldOutBySelectors(doc);
+        }
+        return availability.endsWith("InStock");
     }
 
     private String extractOptionLabel(Document doc, JsonNode productJson) {
@@ -266,7 +284,11 @@ public class ModeManDetailParser implements DetailParser {
             }
         }
 
-        return doc.selectFirst("div.soldOut, .btn_soldout:not(.displaynone), .sold:not(.displaynone)") == null;
+        return !isSoldOutBySelectors(doc);
+    }
+
+    private boolean isSoldOutBySelectors(Document doc) {
+        return doc.selectFirst("div.soldOut, .btn_soldout:not(.displaynone), .sold:not(.displaynone)") != null;
     }
 
     private JsonNode extractFirstOffer(JsonNode productJson) {
