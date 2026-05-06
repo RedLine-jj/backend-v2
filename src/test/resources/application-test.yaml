@@ -26,6 +26,11 @@ jwt:
 crawler:
   modeman:
     base-url: https://test-modeman.example.com
+    categories:
+      - category-no: 858
+        model-type: DENIM_PANTS
+      - category-no: 263
+        model-type: DENIM_JACKET
   neststore:
     base-url: https://test-neststore.example.com
   semibasement:

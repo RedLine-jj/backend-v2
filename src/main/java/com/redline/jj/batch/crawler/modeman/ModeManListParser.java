@@ -3,9 +3,9 @@ package com.redline.jj.batch.crawler.modeman;
 import com.redline.jj.batch.crawler.ListParser;
 import com.redline.jj.common.exception.BusinessException;
 import com.redline.jj.common.exception.ErrorCode;
+import com.redline.jj.config.CrawlerProperties;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -16,19 +16,21 @@ import java.util.Set;
 @Component
 public class ModeManListParser implements ListParser {
 
-    private static final List<Integer> CRAWL_CATEGORY_NOS = List.of(858, 263);
-
     private final String baseUrl;
+    private final List<Integer> categoryNos;
 
-    public ModeManListParser(@Value("${crawler.modeman.base-url}") String baseUrl) {
-        this.baseUrl = baseUrl.replaceAll("/+$", "");
+    public ModeManListParser(CrawlerProperties crawlerProperties) {
+        this.baseUrl = crawlerProperties.modeMan().baseUrl().replaceAll("/+$", "");
+        this.categoryNos = crawlerProperties.modeMan().categories().stream()
+            .map(CrawlerProperties.Category::categoryNo)
+            .toList();
     }
 
     @Override
     public List<String> parseProductUrls(int page) throws BusinessException {
         try {
             Set<String> urls = new LinkedHashSet<>();
-            for (Integer categoryNo : CRAWL_CATEGORY_NOS) {
+            for (Integer categoryNo : categoryNos) {
                 Document doc = Jsoup.connect(baseUrl + "/product/list.html?cate_no="
                                 + categoryNo + "&page=" + page)
                         .userAgent("Mozilla/5.0")

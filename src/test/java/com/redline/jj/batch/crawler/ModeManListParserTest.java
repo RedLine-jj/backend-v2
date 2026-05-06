@@ -1,6 +1,8 @@
 package com.redline.jj.batch.crawler;
 
 import com.redline.jj.batch.crawler.modeman.ModeManListParser;
+import com.redline.jj.config.CrawlerProperties;
+import com.redline.jj.domain.model.Model.ModelType;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -22,7 +24,7 @@ class ModeManListParserTest {
     void setUp() throws IOException {
         server = new MockWebServer();
         server.start();
-        parser = new ModeManListParser(server.url("/").toString());
+        parser = new ModeManListParser(buildProperties());
     }
 
     @AfterEach
@@ -53,5 +55,17 @@ class ModeManListParserTest {
         );
         assertThat(server.takeRequest().getPath()).isEqualTo("/product/list.html?cate_no=858&page=3");
         assertThat(server.takeRequest().getPath()).isEqualTo("/product/list.html?cate_no=263&page=3");
+    }
+
+    private CrawlerProperties buildProperties() {
+        return new CrawlerProperties(
+            new CrawlerProperties.ModeMan(
+                server.url("/").toString(),
+                List.of(
+                    new CrawlerProperties.Category(858, ModelType.DENIM_PANTS),
+                    new CrawlerProperties.Category(263, ModelType.DENIM_JACKET)
+                )
+            )
+        );
     }
 }

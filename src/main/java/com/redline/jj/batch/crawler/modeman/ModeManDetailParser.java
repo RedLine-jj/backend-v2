@@ -6,6 +6,7 @@ import com.redline.jj.batch.crawler.DetailParser;
 import com.redline.jj.batch.crawler.dto.CrawledProduct;
 import com.redline.jj.common.exception.BusinessException;
 import com.redline.jj.common.exception.ErrorCode;
+import com.redline.jj.config.CrawlerProperties;
 import com.redline.jj.domain.model.Model.ModelType;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -21,6 +22,12 @@ import java.util.List;
 public class ModeManDetailParser implements DetailParser {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    private final List<CrawlerProperties.Category> categories;
+
+    public ModeManDetailParser(CrawlerProperties crawlerProperties) {
+        this.categories = crawlerProperties.modeMan().categories();
+    }
 
     @Override
     public CrawledProduct parse(String url) throws BusinessException {
@@ -140,13 +147,15 @@ public class ModeManDetailParser implements DetailParser {
     }
 
     private ModelType extractModelType(String url) {
-        if (url.contains("/category/858/") || url.contains("cate_no=858")) {
-            return ModelType.DENIM_PANTS;
-        }
-        if (url.contains("/category/263/") || url.contains("cate_no=263")) {
-            return ModelType.DENIM_JACKET;
-        }
-        return null;
+        return categories.stream()
+            .filter(category -> containsCategoryNo(url, category.categoryNo()))
+            .map(CrawlerProperties.Category::modelType)
+            .findFirst()
+            .orElse(null);
+    }
+
+    private boolean containsCategoryNo(String url, int categoryNo) {
+        return url.contains("/category/" + categoryNo + "/") || url.contains("cate_no=" + categoryNo);
     }
 
     private String extractImageUrl(JsonNode productJson) {
