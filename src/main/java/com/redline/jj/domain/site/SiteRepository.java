@@ -7,4 +7,6 @@ import java.util.Optional;
 public interface SiteRepository extends JpaRepository<Site, Long> {
 
     Optional<Site> findBySiteName(String siteName);
+
+    boolean existsBySiteName(String siteName);
 }
