@@ -1,6 +1,7 @@
 package com.redline.jj.api.master;
 
 import com.redline.jj.api.master.dto.BrandResponse;
+import com.redline.jj.api.master.dto.ModelTypeResponse;
 import com.redline.jj.api.master.dto.SiteResponse;
 import com.redline.jj.domain.brand.BrandRepository;
 import com.redline.jj.domain.model.Model.ModelType;
@@ -43,9 +44,9 @@ public class MasterDataService {
     @CacheEvict("sites")
     public void evictSitesCache() {}
 
-    public List<String> getModelTypes() {
+    public List<ModelTypeResponse> getModelTypes() {
         return Arrays.stream(ModelType.values())
-                .map(Enum::name)
+                .map(ModelTypeResponse::from)
                 .toList();
     }
 }

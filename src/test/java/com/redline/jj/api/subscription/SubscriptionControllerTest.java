@@ -5,6 +5,7 @@ import com.redline.jj.api.subscription.dto.SubscriptionResponse;
 import com.redline.jj.common.exception.BusinessException;
 import com.redline.jj.common.exception.ErrorCode;
 import com.redline.jj.common.response.ApiResponse;
+import com.redline.jj.common.response.CursorPage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
@@ -111,7 +113,7 @@ class SubscriptionControllerTest {
     @DisplayName("subscribe - 인증된 사용자가 구독하면 200과 구독 정보를 반환한다")
     void subscribe_인증_성공_200() throws Exception {
         SubscriptionResponse response = new SubscriptionResponse(
-            1L, "testuser", 10L, "Model X", "BrandA", LocalDateTime.of(2026, 4, 27, 0, 0)
+            1L, 10L, "Model X", "BrandA", null, LocalDateTime.of(2026, 4, 27, 0, 0)
         );
         given(subscriptionService.subscribe(eq("testuser"), eq(10L))).willReturn(response);
 
@@ -122,7 +124,6 @@ class SubscriptionControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.id").value(1))
-            .andExpect(jsonPath("$.data.userLoginId").value("testuser"))
             .andExpect(jsonPath("$.data.modelId").value(10));
     }
 
@@ -141,16 +142,17 @@ class SubscriptionControllerTest {
     @DisplayName("getMySubscriptions - 인증된 사용자가 목록을 조회하면 200과 구독 리스트를 반환한다")
     void getMySubscriptions_인증_성공_200() throws Exception {
         SubscriptionResponse response = new SubscriptionResponse(
-            2L, "testuser", 20L, "Model Y", "BrandB", LocalDateTime.of(2026, 4, 27, 0, 0)
+            2L, 20L, "Model Y", "BrandB", null, LocalDateTime.of(2026, 4, 27, 0, 0)
         );
-        given(subscriptionService.getMySubscriptions("testuser")).willReturn(List.of(response));
+        CursorPage<SubscriptionResponse> page = CursorPage.of(List.of(response), null, false);
+        given(subscriptionService.getMySubscriptions(eq("testuser"), isNull(), eq(20))).willReturn(page);
 
         mockMvc.perform(get("/api/subscriptions")
                 .with(user("testuser").roles("USER")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data[0].id").value(2))
-            .andExpect(jsonPath("$.data[0].modelId").value(20));
+            .andExpect(jsonPath("$.data.content[0].id").value(2))
+            .andExpect(jsonPath("$.data.content[0].modelId").value(20));
     }
 
     @Test

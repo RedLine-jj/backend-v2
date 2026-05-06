@@ -10,13 +10,13 @@ public class SubscriptionTopResponse {
 
     private Long modelId;
     private String modelName;
-    private String brandName;
+    private Long count;
 
     public static SubscriptionTopResponse from(ModelSubscriptionCount projection) {
         return new SubscriptionTopResponse(
             projection.getModelId(),
             projection.getModelName(),
-            projection.getBrandName()
+            projection.getCount()
         );
     }
 }

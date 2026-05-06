@@ -14,7 +14,20 @@ import lombok.*;
 @Builder
 public class Model extends BaseEntity {
 
-    public enum ModelType { DENIM_PANTS, DENIM_JACKET }
+    public enum ModelType {
+        DENIM_PANTS("데님 팬츠"),
+        DENIM_JACKET("데님 재킷");
+
+        private final String label;
+
+        ModelType(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

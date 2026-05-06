@@ -1,9 +1,11 @@
 package com.redline.jj.api.subscription;
 
+import com.redline.jj.api.subscription.dto.SubscriptionRequest;
 import com.redline.jj.api.subscription.dto.SubscriptionResponse;
 import com.redline.jj.api.subscription.dto.SubscriptionTopResponse;
 import com.redline.jj.common.exception.BusinessException;
 import com.redline.jj.common.exception.ErrorCode;
+import com.redline.jj.common.response.CursorPage;
 import com.redline.jj.domain.model.Model;
 import com.redline.jj.domain.model.ModelRepository;
 import com.redline.jj.domain.subscription.Subscription;
@@ -11,6 +13,7 @@ import com.redline.jj.domain.subscription.SubscriptionRepository;
 import com.redline.jj.domain.user.User;
 import com.redline.jj.domain.user.UserFinder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,11 +61,18 @@ public class SubscriptionService {
     }
 
     @Transactional(readOnly = true)
-    public List<SubscriptionResponse> getMySubscriptions(String userLoginId) {
-        return subscriptionRepository.findByUser_UserId(userLoginId)
+    public CursorPage<SubscriptionResponse> getMySubscriptions(String userLoginId, Long cursor, int size) {
+        PageRequest pageable = PageRequest.of(0, size + 1);
+        List<SubscriptionResponse> fetched = subscriptionRepository
+            .findByUserWithCursor(userLoginId, cursor, pageable)
             .stream()
             .map(SubscriptionResponse::from)
             .toList();
+
+        boolean hasNext = fetched.size() > size;
+        List<SubscriptionResponse> content = fetched.stream().limit(size).toList();
+        Long nextCursor = hasNext ? content.get(content.size() - 1).getId() : null;
+        return CursorPage.of(content, nextCursor, hasNext);
     }
 
     @Transactional(readOnly = true)
@@ -77,5 +87,4 @@ public class SubscriptionService {
             .map(SubscriptionTopResponse::from)
             .toList();
     }
-
 }

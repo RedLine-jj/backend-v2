@@ -14,7 +14,8 @@ public class NotificationResponse {
     private Long modelId;
     private String modelName;
     private String brandName;
-    private boolean read;
+    private String imageUrl;
+    private boolean readYn;
     private LocalDateTime createdAt;
 
     public static NotificationResponse from(RestockNotification notification) {
@@ -23,6 +24,7 @@ public class NotificationResponse {
             notification.getModel().getId(),
             notification.getModel().getModelName(),
             notification.getModel().getBrand().getBrandName(),
+            notification.getModel().getImageUrl(),
             notification.isRead(),
             notification.getCreatedAt()
         );

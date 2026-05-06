@@ -38,7 +38,7 @@ public class AuthService {
         }
         User user = User.builder()
             .userId(request.getUserId())
-            .userPw(passwordEncoder.encode(request.getUserPw()))
+            .userPw(passwordEncoder.encode(request.getPassword()))
             .userName(request.getUserName())
             .build();
         userRepository.save(user);
@@ -49,7 +49,7 @@ public class AuthService {
         User user = userRepository.findByUserId(request.getUserId())
             .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_PASSWORD));
 
-        if (!passwordEncoder.matches(request.getUserPw(), user.getUserPw())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getUserPw())) {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD);
         }
 

@@ -1,10 +1,10 @@
 package com.redline.jj.api.model;
 
 import com.redline.jj.api.model.dto.ModelDetailResponse;
-import com.redline.jj.api.model.dto.ModelPageResponse;
 import com.redline.jj.api.model.dto.ModelResponse;
 import com.redline.jj.common.exception.BusinessException;
 import com.redline.jj.common.exception.ErrorCode;
+import com.redline.jj.common.response.CursorPage;
 import com.redline.jj.domain.model.Model;
 import com.redline.jj.domain.model.Model.ModelType;
 import com.redline.jj.domain.model.ModelRepository;
@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,20 +31,30 @@ public class ModelService {
     private final SiteOptionRepository siteOptionRepository;
 
     @Transactional(readOnly = true)
-    public ModelPageResponse listModels(List<Long> brandIds, List<ModelType> types,
-                                        Long cursor, int size) {
+    public CursorPage<ModelResponse> listModels(List<Long> brandIds, List<ModelType> types,
+                                                Long cursor, int size) {
         PageRequest pageable = PageRequest.of(0, size + 1, Sort.by(Sort.Direction.DESC, "id"));
         List<Model> fetched = modelRepository.findAll(buildSpec(brandIds, types, cursor), pageable)
             .getContent();
 
         boolean hasNext = fetched.size() > size;
-        List<ModelResponse> items = fetched.stream()
-            .limit(size)
-            .map(ModelResponse::from)
-            .toList();
-        Long nextCursor = hasNext ? items.get(items.size() - 1).getId() : null;
+        List<Model> limited = fetched.stream().limit(size).toList();
 
-        return ModelPageResponse.of(items, nextCursor, hasNext);
+        List<Long> modelIds = limited.stream().map(Model::getId).toList();
+        Map<Long, Integer> lowestPrices = modelIds.isEmpty() ? Map.of() :
+            siteOptionRepository.findLowestPricesByModelIds(modelIds)
+                .stream()
+                .collect(Collectors.toMap(
+                    row -> (Long) row[0],
+                    row -> row[1] != null ? ((Number) row[1]).intValue() : null
+                ));
+
+        List<ModelResponse> content = limited.stream()
+            .map(m -> ModelResponse.from(m, lowestPrices.get(m.getId())))
+            .toList();
+        Long nextCursor = hasNext ? content.get(content.size() - 1).getId() : null;
+
+        return CursorPage.of(content, nextCursor, hasNext);
     }
 
     @Transactional(readOnly = true)

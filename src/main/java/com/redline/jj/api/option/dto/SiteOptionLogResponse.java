@@ -13,15 +13,15 @@ public class SiteOptionLogResponse implements Serializable {
     private final LocalDateTime capturedAt;
     private final String optionLabel;
     private final Integer price;
-    private final boolean inStock;
+    private final boolean status;
 
     private SiteOptionLogResponse(Long id, LocalDateTime capturedAt, String optionLabel,
-                                   Integer price, boolean inStock) {
+                                   Integer price, boolean status) {
         this.id = id;
         this.capturedAt = capturedAt;
         this.optionLabel = optionLabel;
         this.price = price;
-        this.inStock = inStock;
+        this.status = status;
     }
 
     public static SiteOptionLogResponse from(SiteOptionLog log) {

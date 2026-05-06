@@ -73,9 +73,7 @@ class SubscriptionServiceTest {
         given(subscriptionRepository.save(any(Subscription.class))).willReturn(subscription);
 
         // SubscriptionResponse.from() 에 필요한 최소 stub
-        given(subscription.getUser()).willReturn(user);
         given(subscription.getModel()).willReturn(model);
-        given(user.getUserId()).willReturn("user1");
         given(model.getId()).willReturn(1L);
         given(model.getModelName()).willReturn("모델명");
         com.redline.jj.domain.brand.Brand brandMock = mock(com.redline.jj.domain.brand.Brand.class);
@@ -203,7 +201,7 @@ class SubscriptionServiceTest {
         ModelSubscriptionCount projection = mock(ModelSubscriptionCount.class);
         given(projection.getModelId()).willReturn(42L);
         given(projection.getModelName()).willReturn("501 Original");
-        given(projection.getBrandName()).willReturn("Levi's");
+        given(projection.getCount()).willReturn(5L);
 
         given(subscriptionRepository.findTop10ModelsBySubscriptionCount()).willReturn(List.of(projection));
 
@@ -216,7 +214,7 @@ class SubscriptionServiceTest {
             .satisfies(dto -> {
                 assertThat(dto.getModelId()).isEqualTo(42L);
                 assertThat(dto.getModelName()).isEqualTo("501 Original");
-                assertThat(dto.getBrandName()).isEqualTo("Levi's");
+                assertThat(dto.getCount()).isEqualTo(5L);
             });
     }
 
@@ -229,7 +227,7 @@ class SubscriptionServiceTest {
                 ModelSubscriptionCount projection = mock(ModelSubscriptionCount.class);
                 given(projection.getModelId()).willReturn((long) i);
                 given(projection.getModelName()).willReturn("모델" + i);
-                given(projection.getBrandName()).willReturn("브랜드" + i);
+                given(projection.getCount()).willReturn((long) i);
                 return projection;
             })
             .toList();

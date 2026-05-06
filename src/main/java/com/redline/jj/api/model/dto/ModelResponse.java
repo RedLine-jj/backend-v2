@@ -14,20 +14,22 @@ public class ModelResponse implements Serializable {
     private final String brandNameKo;
     private final String modelName;
     private final String imageUrl;
-    private final String modelType;
+    private final String type;
+    private final Integer lowestPrice;
 
     private ModelResponse(Long id, Long brandId, String brandName, String brandNameKo,
-                          String modelName, String imageUrl, String modelType) {
+                          String modelName, String imageUrl, String type, Integer lowestPrice) {
         this.id = id;
         this.brandId = brandId;
         this.brandName = brandName;
         this.brandNameKo = brandNameKo;
         this.modelName = modelName;
         this.imageUrl = imageUrl;
-        this.modelType = modelType;
+        this.type = type;
+        this.lowestPrice = lowestPrice;
     }
 
-    public static ModelResponse from(Model model) {
+    public static ModelResponse from(Model model, Integer lowestPrice) {
         return new ModelResponse(
             model.getId(),
             model.getBrand().getId(),
@@ -35,7 +37,8 @@ public class ModelResponse implements Serializable {
             model.getBrand().getBrandNameKo(),
             model.getModelName(),
             model.getImageUrl(),
-            model.getModelType() != null ? model.getModelType().name() : null
+            model.getModelType() != null ? model.getModelType().name() : null,
+            lowestPrice
         );
     }
 }

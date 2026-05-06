@@ -15,24 +15,29 @@ public class SiteOptionResponse implements Serializable {
     private final String siteLink;
     private final Long modelId;
     private final String modelName;
+    private final String brandName;
+    private final String imageUrl;
     private final String optionLabel;
     private final String url;
-    private final boolean inStock;
+    private final boolean status;
     private final Integer price;
     private final LocalDateTime lastCapturedAt;
 
     private SiteOptionResponse(Long id, Long siteId, String siteName, String siteLink,
-                                Long modelId, String modelName, String optionLabel, String url,
-                                boolean inStock, Integer price, LocalDateTime lastCapturedAt) {
+                                Long modelId, String modelName, String brandName, String imageUrl,
+                                String optionLabel, String url, boolean status,
+                                Integer price, LocalDateTime lastCapturedAt) {
         this.id = id;
         this.siteId = siteId;
         this.siteName = siteName;
         this.siteLink = siteLink;
         this.modelId = modelId;
         this.modelName = modelName;
+        this.brandName = brandName;
+        this.imageUrl = imageUrl;
         this.optionLabel = optionLabel;
         this.url = url;
-        this.inStock = inStock;
+        this.status = status;
         this.price = price;
         this.lastCapturedAt = lastCapturedAt;
     }
@@ -45,6 +50,8 @@ public class SiteOptionResponse implements Serializable {
             siteOption.getSite().getSiteLink(),
             siteOption.getModel().getId(),
             siteOption.getModel().getModelName(),
+            siteOption.getModel().getBrand().getBrandName(),
+            siteOption.getModel().getImageUrl(),
             siteOption.getOptionLabel(),
             siteOption.getUrl(),
             siteOption.isInStock(),

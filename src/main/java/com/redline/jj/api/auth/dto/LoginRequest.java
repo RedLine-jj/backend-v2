@@ -14,5 +14,5 @@ public class LoginRequest {
     private String userId;
 
     @NotBlank
-    private String userPw;
+    private String password;
 }

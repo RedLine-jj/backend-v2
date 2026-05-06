@@ -7,8 +7,6 @@ import com.redline.jj.common.exception.BusinessException;
 import com.redline.jj.common.exception.ErrorCode;
 import com.redline.jj.domain.model.Model;
 import com.redline.jj.domain.model.ModelRepository;
-import com.redline.jj.domain.notification.RestockNotification;
-import com.redline.jj.domain.notification.RestockNotificationRepository;
 import com.redline.jj.domain.option.SiteOption;
 import com.redline.jj.domain.option.SiteOptionLog;
 import com.redline.jj.domain.option.SiteOptionLogRepository;
@@ -28,7 +26,6 @@ public class DashboardService {
     private final ModelRepository modelRepository;
     private final SiteOptionRepository siteOptionRepository;
     private final SiteOptionLogRepository siteOptionLogRepository;
-    private final RestockNotificationRepository restockNotificationRepository;
 
     public PriceComparisonResponse getPriceComparison(Long modelId) {
         Model model = modelRepository.findById(modelId)
@@ -49,8 +46,8 @@ public class DashboardService {
     }
 
     public List<RecentRestockResponse> getRecentRestocks() {
-        List<RestockNotification> notifications = restockNotificationRepository.findTop10ByOrderByCreatedAtDesc();
-        return notifications.stream()
+        return siteOptionLogRepository.findTop10ByInStockTrueOrderByCapturedAtDesc()
+            .stream()
             .map(RecentRestockResponse::from)
             .toList();
     }

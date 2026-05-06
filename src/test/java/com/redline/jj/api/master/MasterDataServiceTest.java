@@ -1,6 +1,7 @@
 package com.redline.jj.api.master;
 
 import com.redline.jj.api.master.dto.BrandResponse;
+import com.redline.jj.api.master.dto.ModelTypeResponse;
 import com.redline.jj.api.master.dto.SiteResponse;
 import com.redline.jj.domain.brand.Brand;
 import com.redline.jj.domain.brand.BrandRepository;
@@ -97,19 +98,22 @@ class MasterDataServiceTest {
 
     @Test
     void getModelTypes_ModelType_enum_전체를_반환한다() {
-        List<String> types = masterDataService.getModelTypes();
+        List<ModelTypeResponse> types = masterDataService.getModelTypes();
 
-        assertThat(types).containsExactlyInAnyOrder(
-                ModelType.DENIM_PANTS.name(),
-                ModelType.DENIM_JACKET.name()
-        );
+        assertThat(types).hasSize(ModelType.values().length);
+        assertThat(types).extracting(ModelTypeResponse::getCode)
+                .containsExactlyInAnyOrder(
+                        ModelType.DENIM_PANTS.name(),
+                        ModelType.DENIM_JACKET.name()
+                );
     }
 
     @Test
-    void getModelTypes_반환값이_enum_name_문자열이다() {
-        List<String> types = masterDataService.getModelTypes();
+    void getModelTypes_code와_label이_올바르게_매핑된다() {
+        List<ModelTypeResponse> types = masterDataService.getModelTypes();
 
-        assertThat(types).allMatch(t -> t.equals(t.toUpperCase()));
-        assertThat(types).contains("DENIM_PANTS", "DENIM_JACKET");
+        assertThat(types).extracting(ModelTypeResponse::getLabel)
+                .containsExactlyInAnyOrder("데님 팬츠", "데님 재킷");
+        assertThat(types).allMatch(t -> t.getCode().equals(t.getCode().toUpperCase()));
     }
 }

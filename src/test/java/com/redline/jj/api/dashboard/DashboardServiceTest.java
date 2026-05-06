@@ -7,15 +7,12 @@ import com.redline.jj.common.exception.BusinessException;
 import com.redline.jj.common.exception.ErrorCode;
 import com.redline.jj.domain.brand.Brand;
 import com.redline.jj.domain.model.Model;
-import com.redline.jj.domain.notification.RestockNotification;
 import com.redline.jj.domain.option.SiteOption;
 import com.redline.jj.domain.option.SiteOptionLog;
 import com.redline.jj.domain.option.SiteOptionLogRepository;
 import com.redline.jj.domain.option.SiteOptionRepository;
-import com.redline.jj.domain.notification.RestockNotificationRepository;
 import com.redline.jj.domain.model.ModelRepository;
 import com.redline.jj.domain.site.Site;
-import com.redline.jj.domain.user.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -48,9 +45,6 @@ class DashboardServiceTest {
 
     @Mock
     private SiteOptionLogRepository siteOptionLogRepository;
-
-    @Mock
-    private RestockNotificationRepository restockNotificationRepository;
 
     @InjectMocks
     private DashboardService dashboardService;
@@ -216,10 +210,10 @@ class DashboardServiceTest {
             .isAfterOrEqualTo(expectedSince.minusSeconds(5))
             .isBeforeOrEqualTo(LocalDateTime.now());
 
-        assertThat(result.getHistories()).hasSize(1);
-        List<PriceHistoryResponse.PricePoint> points = result.getHistories().get(0).points();
-        assertThat(points).hasSize(2);
-        assertThat(points.get(0).capturedAt()).isBefore(points.get(1).capturedAt());
+        assertThat(result.getSites()).hasSize(1);
+        List<PriceHistoryResponse.DailyPrice> history = result.getSites().get(0).history();
+        assertThat(history).hasSize(2);
+        assertThat(history.get(0).date()).isLessThan(history.get(1).date());
     }
 
     @Test
@@ -236,7 +230,7 @@ class DashboardServiceTest {
         PriceHistoryResponse result = dashboardService.getPriceHistory(1L, 0);
 
         // then
-        assertThat(result.getHistories()).isEmpty();
+        assertThat(result.getSites()).isEmpty();
     }
 
     // -----------------------------------------------------------------------
@@ -248,21 +242,16 @@ class DashboardServiceTest {
         // given
         Brand brand = buildBrand();
         Model model = buildModel(brand);
-        User user = User.builder().id(1L).userId("testUser").userPw("pw").userName("테스터").build();
+        Site site = buildSite(1L, "modeMan", "https://mode-man.com");
+        SiteOption siteOption = buildSiteOption(1L, site, model, "30/30", 89000);
 
-        RestockNotification n1 = RestockNotification.builder()
-            .id(1L)
-            .model(model)
-            .user(user)
-            .build();
-        RestockNotification n2 = RestockNotification.builder()
-            .id(2L)
-            .model(model)
-            .user(user)
-            .build();
+        SiteOptionLog log1 = buildSiteOptionLog(1L, siteOption, "30/30", 89000,
+            LocalDateTime.of(2024, 1, 2, 10, 0));
+        SiteOptionLog log2 = buildSiteOptionLog(2L, siteOption, "30/30", 89000,
+            LocalDateTime.of(2024, 1, 1, 10, 0));
 
-        given(restockNotificationRepository.findTop10ByOrderByCreatedAtDesc())
-            .willReturn(List.of(n1, n2));
+        given(siteOptionLogRepository.findTop10ByInStockTrueOrderByCapturedAtDesc())
+            .willReturn(List.of(log1, log2));
 
         // when
         List<RecentRestockResponse> result = dashboardService.getRecentRestocks();
@@ -276,22 +265,24 @@ class DashboardServiceTest {
         // given
         Brand brand = buildBrand();
         Model model = buildModel(brand);
-        User user = User.builder().id(1L).userId("testUser").userPw("pw").userName("테스터").build();
+        Site site = buildSite(1L, "modeMan", "https://mode-man.com");
+        SiteOption siteOption = buildSiteOption(1L, site, model, "30/30", 89000);
 
-        List<RestockNotification> notifications = new ArrayList<>();
+        List<SiteOptionLog> logs = new ArrayList<>();
         for (long i = 1; i <= 10; i++) {
-            notifications.add(RestockNotification.builder().id(i).model(model).user(user).build());
+            logs.add(buildSiteOptionLog(i, siteOption, "30/30", 89000,
+                LocalDateTime.of(2024, 1, (int)(11 - i), 10, 0)));
         }
 
-        given(restockNotificationRepository.findTop10ByOrderByCreatedAtDesc())
-            .willReturn(notifications);
+        given(siteOptionLogRepository.findTop10ByInStockTrueOrderByCapturedAtDesc())
+            .willReturn(logs);
 
         // when
         List<RecentRestockResponse> result = dashboardService.getRecentRestocks();
 
         // then
         assertThat(result).hasSize(10);
-        assertThat(result.get(0).getNotificationId()).isEqualTo(1L);
-        assertThat(result.get(9).getNotificationId()).isEqualTo(10L);
+        assertThat(result.get(0).getModelId()).isEqualTo(model.getId());
+        assertThat(result.get(0).getModelName()).isEqualTo(model.getModelName());
     }
 }
