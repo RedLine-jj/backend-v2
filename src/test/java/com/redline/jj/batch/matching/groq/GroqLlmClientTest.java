@@ -41,7 +41,8 @@ class GroqLlmClientTest {
                 new ObjectMapper(),
                 "llama-3.1-8b-instant",
                 85.0,
-                "테스트 프롬프트 — 브랜드: {brandHint}, 상품명: {siteModelName}"
+                "테스트 프롬프트 — 브랜드: {brandHint}, 상품명: {siteModelName}",
+                new long[]{0L, 0L, 0L}
         );
     }
 
@@ -347,15 +348,82 @@ class GroqLlmClientTest {
                         .isEqualTo(ErrorCode.LLM_MATCHING_FAILED));
     }
 
+    // -----------------------------------------------------------------------
+    // 6. 429 rate limit retry
+    // -----------------------------------------------------------------------
+
     @Test
-    @DisplayName("LLM 429 Too Many Requests 응답 시 LLM_MATCHING_FAILED 예외 발생")
-    void match_LLM429응답_LLM_MATCHING_FAILED예외() {
+    @DisplayName("429 1회 후 재시도 성공 시 정상 LlmMatchResult 반환")
+    void match_429후재시도성공_LlmMatchResult반환() {
         groqServer.enqueue(new MockResponse().setResponseCode(429));
+        groqServer.enqueue(new MockResponse()
+                .setBody(buildGroqResponse("{\"brandName\":\"모드만\",\"modelName\":\"501\",\"confidence\":92.0}"))
+                .addHeader("Content-Type", "application/json")
+                .setResponseCode(200));
+
+        Optional<LlmMatchResult> result = groqLlmClient.match(buildProduct("모드만", "501", "모드만501"));
+
+        assertThat(result).isPresent();
+        assertThat(groqServer.getRequestCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("429가 4회 지속되면 LLM_RATE_LIMITED 예외 발생")
+    void match_429최대재시도초과_LLM_RATE_LIMITED예외() {
+        for (int i = 0; i < 4; i++) {
+            groqServer.enqueue(new MockResponse().setResponseCode(429));
+        }
+
+        assertThatThrownBy(() -> groqLlmClient.match(buildProduct("모드만", "테스트", "테스트")))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(ex -> assertThat(((BusinessException) ex).getErrorCode())
+                        .isEqualTo(ErrorCode.LLM_RATE_LIMITED));
+        assertThat(groqServer.getRequestCount()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Retry-After 헤더가 있으면 해당 값으로 대기 후 재시도 성공")
+    void match_RetryAfter헤더있음_헤더값대기후재시도성공() {
+        groqServer.enqueue(new MockResponse()
+                .setResponseCode(429)
+                .addHeader("Retry-After", "0"));
+        groqServer.enqueue(new MockResponse()
+                .setBody(buildGroqResponse("{\"brandName\":\"모드만\",\"modelName\":\"501\",\"confidence\":92.0}"))
+                .addHeader("Content-Type", "application/json")
+                .setResponseCode(200));
+
+        Optional<LlmMatchResult> result = groqLlmClient.match(buildProduct("모드만", "501", "모드만501"));
+
+        assertThat(result).isPresent();
+        assertThat(groqServer.getRequestCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Retry-After 헤더 없으면 기본 backoff 사용 후 재시도 성공")
+    void match_RetryAfter헤더없음_기본backoff후재시도성공() {
+        groqServer.enqueue(new MockResponse().setResponseCode(429));
+        groqServer.enqueue(new MockResponse()
+                .setBody(buildGroqResponse("{\"brandName\":\"모드만\",\"modelName\":\"501\",\"confidence\":92.0}"))
+                .addHeader("Content-Type", "application/json")
+                .setResponseCode(200));
+
+        Optional<LlmMatchResult> result = groqLlmClient.match(buildProduct("모드만", "501", "모드만501"));
+
+        assertThat(result).isPresent();
+        assertThat(groqServer.getRequestCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("429 후 500 응답 시 LLM_MATCHING_FAILED 예외 발생")
+    void match_429후500응답_LLM_MATCHING_FAILED예외() {
+        groqServer.enqueue(new MockResponse().setResponseCode(429));
+        groqServer.enqueue(new MockResponse().setResponseCode(500));
 
         assertThatThrownBy(() -> groqLlmClient.match(buildProduct("모드만", "테스트", "테스트")))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(ex -> assertThat(((BusinessException) ex).getErrorCode())
                         .isEqualTo(ErrorCode.LLM_MATCHING_FAILED));
+        assertThat(groqServer.getRequestCount()).isEqualTo(2);
     }
 
     // -----------------------------------------------------------------------
