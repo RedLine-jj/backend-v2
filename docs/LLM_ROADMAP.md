@@ -27,8 +27,8 @@ PRD의 핵심 구현 항목은 이미 코드에 반영된 상태이다. 이 로�
 
 ### 1-1. ErrorCode 검증
 
-- [ ] `ErrorCode.LLM_RATE_LIMITED` 코드값 `C006`, HTTP 상태 `429` 확인
-- [ ] `GlobalExceptionHandler`에서 `LLM_RATE_LIMITED` 예외가 `ApiResponse.fail`로 올바르게 변환되는지 확인
+- [x] `ErrorCode.LLM_RATE_LIMITED` 코드값 `C006`, HTTP 상태 `429` 확인
+- [x] `GlobalExceptionHandler`에서 `LLM_RATE_LIMITED` 예외가 `ApiResponse.fail`로 올바르게 변환되는지 확인
 
 **테스트 실행**
 
@@ -40,8 +40,8 @@ PRD의 핵심 구현 항목은 이미 코드에 반영된 상태이다. 이 로�
 
 ### 1-2. CrawlingSkipPolicy 검증
 
-- [ ] `LLM_RATE_LIMITED` 포함 여부 코드 리뷰
-- [ ] `LLM_MATCHING_FAILED`는 skip 대상이 아님을 재확인
+- [x] `LLM_RATE_LIMITED` 포함 여부 코드 리뷰
+- [x] `LLM_MATCHING_FAILED`는 skip 대상이 아님을 재확인
 
 **테스트 실행**
 
@@ -57,20 +57,20 @@ PRD의 핵심 구현 항목은 이미 코드에 반영된 상태이다. 이 로�
 
 ### 2-1. 재시도 성공 케이스
 
-- [ ] 429 1회 발생 후 재시도 성공 시 정상 `LlmMatchResult` 반환 확인
+- [x] 429 1회 발생 후 재시도 성공 시 정상 `LlmMatchResult` 반환 확인
 
 ### 2-2. 재시도 전체 실패 케이스
 
-- [ ] 429가 `MAX_RATE_LIMIT_ATTEMPTS`(4회)만큼 지속되면 `BusinessException(LLM_RATE_LIMITED)` 발생 확인
+- [x] 429가 `MAX_RATE_LIMIT_ATTEMPTS`(4회)만큼 지속되면 `BusinessException(LLM_RATE_LIMITED)` 발생 확인
 
 ### 2-3. Backoff 대기 케이스
 
-- [ ] `Retry-After` 헤더가 있을 때 해당 값으로 대기 적용 확인
-- [ ] `Retry-After` 헤더가 없을 때 `2s → 5s → 10s` backoff 순서 적용 확인
+- [x] `Retry-After` 헤더가 있을 때 해당 값으로 대기 적용 확인
+- [x] `Retry-After` 헤더가 없을 때 `2s → 5s → 10s` backoff 순서 적용 확인
 
 ### 2-4. 기존 테스트 유지
 
-- [ ] 설명문 포함 JSON 응답 파싱 기존 테스트 통과 확인
+- [x] 설명문 포함 JSON 응답 파싱 기존 테스트 통과 확인
 
 **테스트 실행**
 
