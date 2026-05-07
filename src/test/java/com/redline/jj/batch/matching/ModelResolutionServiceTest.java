@@ -415,6 +415,144 @@ class ModelResolutionServiceTest {
     }
 
     // -----------------------------------------------------------------------
+    // 3-1. LLM 결과 캐시 동작
+    // -----------------------------------------------------------------------
+
+    @Test
+    @DisplayName("동일 키로 두 번 resolve 시 llmMatchClient.match 1회만 호출")
+    void resolve_동일키두번호출_LLM1회만호출() {
+        // given
+        when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(llmMatchClient.match(any()))
+                .thenReturn(Optional.of(new LlmMatchResult("모드만", "501 데님", 90.0)));
+        Brand brand = Brand.builder().brandName("모드만").build();
+        when(brandRepository.findByBrandName("모드만")).thenReturn(Optional.of(brand));
+        Model newModel = buildModel(10L, "모드만", "모드만501사이트명");
+        when(modelRepository.save(any())).thenReturn(newModel);
+        when(modelAliasRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        CrawledProduct product = buildProduct("모드만", "모드만501사이트명", "모드만501사이트명");
+
+        // when
+        service.resolve(product);
+        service.resolve(product);
+
+        // then
+        verify(llmMatchClient, times(1)).match(any());
+    }
+
+    @Test
+    @DisplayName("Optional.empty() 결과도 캐시되어 두 번째 호출에서 LLM 미호출")
+    void resolve_emptyResult_캐시저장_두번째호출LLM미호출() {
+        // given
+        when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(llmMatchClient.match(any())).thenReturn(Optional.empty());
+        Brand brand = Brand.builder().brandName("모드만").build();
+        when(brandRepository.findByBrandName("모드만")).thenReturn(Optional.of(brand));
+        Model newModel = buildModel(11L, "모드만", "빈결과모델");
+        when(modelRepository.save(any())).thenReturn(newModel);
+        when(modelAliasRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        CrawledProduct product = buildProduct("모드만", "빈결과모델", "빈결과사이트명");
+
+        // when
+        service.resolve(product);
+        service.resolve(product);
+
+        // then
+        verify(llmMatchClient, times(1)).match(any());
+    }
+
+    @Test
+    @DisplayName("429 예외 발생 시 캐시 미저장 → 두 번째 호출에서 LLM 재호출")
+    void resolve_429예외_캐시미저장_두번째호출LLM재호출() {
+        // given
+        when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(llmMatchClient.match(any()))
+                .thenThrow(new BusinessException(ErrorCode.LLM_RATE_LIMITED))
+                .thenReturn(Optional.empty());
+        Brand brand = Brand.builder().brandName("모드만").build();
+        when(brandRepository.findByBrandName("모드만")).thenReturn(Optional.of(brand));
+        Model newModel = buildModel(12L, "모드만", "429테스트모델");
+        when(modelRepository.save(any())).thenReturn(newModel);
+        when(modelAliasRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        CrawledProduct product = buildProduct("모드만", "429테스트모델", "429테스트사이트명");
+
+        // when
+        assertThatThrownBy(() -> service.resolve(product))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.LLM_RATE_LIMITED);
+
+        service.resolve(product);
+
+        // then
+        verify(llmMatchClient, times(2)).match(any());
+    }
+
+    // -----------------------------------------------------------------------
+    // 3-2. 429 fallback 저장 차단
+    // -----------------------------------------------------------------------
+
+    @Test
+    @DisplayName("LLM_RATE_LIMITED 발생 시 modelRepository.save, modelAliasRepository.save, brandRepository.save 미호출 및 예외 전파")
+    void resolve_LLM_RATE_LIMITED_모든save미호출_예외전파() {
+        // given
+        when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(llmMatchClient.match(any()))
+                .thenThrow(new BusinessException(ErrorCode.LLM_RATE_LIMITED));
+
+        CrawledProduct product = buildProduct("모드만", "429저장차단모델", "429저장차단사이트명");
+
+        // when & then
+        assertThatThrownBy(() -> service.resolve(product))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.LLM_RATE_LIMITED);
+
+        verify(modelRepository, never()).save(any());
+        verify(modelAliasRepository, never()).save(any());
+        verify(brandRepository, never()).save(any());
+    }
+
+    // -----------------------------------------------------------------------
+    // 3-3. 기존 흐름 유지
+    // -----------------------------------------------------------------------
+
+    @Test
+    @DisplayName("LLM 결과가 있지만 DB 미매칭 시 product.modelName()으로 신규 모델 저장")
+    void resolve_LLM결과있지만DB미매칭_productModelName으로신규모델저장() {
+        // given
+        when(brandAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(modelRepository.findByBrand_BrandNameAndModelName(any(), any())).thenReturn(Optional.empty());
+        when(modelAliasRepository.findByAliasName(any())).thenReturn(Optional.empty());
+        when(llmMatchClient.match(any()))
+                .thenReturn(Optional.of(new LlmMatchResult("모드만", "LLM정식명", 92.0)));
+        Brand brand = Brand.builder().brandName("모드만").build();
+        when(brandRepository.findByBrandName("모드만")).thenReturn(Optional.of(brand));
+        ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
+        when(modelRepository.save(modelCaptor.capture())).thenAnswer(i -> i.getArgument(0));
+        when(modelAliasRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        CrawledProduct product = buildProduct("모드만", "원시모델명", "원시사이트명");
+
+        // when
+        service.resolve(product);
+
+        // then
+        assertThat(modelCaptor.getValue().getModelName()).isEqualTo("원시모델명");
+    }
+
+    // -----------------------------------------------------------------------
     // helpers
     // -----------------------------------------------------------------------
 

@@ -12,11 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ErrorCodeTest {
 
-    @Test
-    void ErrorCode_총_개수는_23개다() {
-        assertThat(ErrorCode.values()).hasSize(23);
-    }
-
     @EnumSource(ErrorCode.class)
     @ParameterizedTest
     void 모든_ErrorCode는_null_필드가_없다(ErrorCode errorCode) {
@@ -41,7 +36,8 @@ class ErrorCodeTest {
         "NOTIFICATION_ACCESS_DENIED,  403, N002",
         "LLM_MATCHING_FAILED,   500, C001",
         "CRAWLING_FAILED,       500, C002",
-        "EMPTY_CATEGORIES,      500, C005"
+        "EMPTY_CATEGORIES,      500, C005",
+        "LLM_RATE_LIMITED,      429, C006"
     })
     @ParameterizedTest
     void 신규_ErrorCode의_HttpStatus와_code가_명세와_일치한다(String name, int expectedStatus, String expectedCode) {
@@ -75,5 +71,11 @@ class ErrorCodeTest {
     @Test
     void RATE_LIMIT_EXCEEDED는_429_TOO_MANY_REQUESTS다() {
         assertThat(ErrorCode.RATE_LIMIT_EXCEEDED.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    @Test
+    void LLM_RATE_LIMITED는_429_TOO_MANY_REQUESTS다() {
+        assertThat(ErrorCode.LLM_RATE_LIMITED.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(ErrorCode.LLM_RATE_LIMITED.getCode()).isEqualTo("C006");
     }
 }

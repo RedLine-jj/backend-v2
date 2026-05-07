@@ -35,7 +35,8 @@ public enum ErrorCode {
     CRAWLING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "C002", "크롤링 처리에 실패했습니다."),
     UNSUPPORTED_SITE(HttpStatus.BAD_REQUEST, "C003", "지원하지 않는 사이트입니다."),
     LAUNCH_FAILURE(HttpStatus.INTERNAL_SERVER_ERROR, "C004", "배치 잡 실행에 실패했습니다."),
-    EMPTY_CATEGORIES(HttpStatus.INTERNAL_SERVER_ERROR, "C005", "크롤링 카테고리 설정이 비어 있습니다.");
+    EMPTY_CATEGORIES(HttpStatus.INTERNAL_SERVER_ERROR, "C005", "크롤링 카테고리 설정이 비어 있습니다."),
+    LLM_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "C006", "LLM 요청 한도를 초과했습니다.");
 
     private final HttpStatus status;
     private final String code;

@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.Optional;
 
 @Slf4j
@@ -27,6 +29,9 @@ public class ModelResolutionService {
     private final BrandAliasRepository brandAliasRepository;
     private final BrandRepository brandRepository;
     private final LlmMatchClient llmMatchClient;
+
+    private final Cache<String, Optional<LlmMatchResult>> llmResultCache =
+            Caffeine.newBuilder().maximumSize(10_000).build();
 
     @Transactional
     public Model resolve(CrawledProduct product) {
@@ -55,7 +60,8 @@ public class ModelResolutionService {
     }
 
     private Model resolveByLlm(CrawledProduct product, String normalizedBrand) {
-        Optional<LlmMatchResult> llmResult = matchWithFallback(product, normalizedBrand);
+        String cacheKey = normalizedBrand + "|" + product.siteModelName();
+        Optional<LlmMatchResult> llmResult = lookupLlmResult(product, normalizedBrand, cacheKey);
 
         if (llmResult.isEmpty()) {
             log.warn("LLM 매칭 실패(신뢰도 미달), 원시 문자열로 신규 Brand/Model 생성: brand={}, model={}",
@@ -89,14 +95,19 @@ public class ModelResolutionService {
         return saved;
     }
 
-    private Optional<LlmMatchResult> matchWithFallback(CrawledProduct product, String normalizedBrand) {
+    private Optional<LlmMatchResult> lookupLlmResult(CrawledProduct product, String normalizedBrand, String cacheKey) {
+        Optional<LlmMatchResult> cached = llmResultCache.getIfPresent(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
         try {
-            return llmMatchClient.match(product);
+            Optional<LlmMatchResult> result = llmMatchClient.match(product);
+            llmResultCache.put(cacheKey, result);
+            return result;
         } catch (BusinessException e) {
             if (e.getErrorCode() != ErrorCode.LLM_MATCHING_FAILED) {
                 throw e;
             }
-
             log.warn("LLM 매칭 실패(API/응답 오류), 원시 문자열로 신규 Brand/Model 생성: brand={}, model={}",
                     normalizedBrand, product.modelName(), e);
             return Optional.empty();
