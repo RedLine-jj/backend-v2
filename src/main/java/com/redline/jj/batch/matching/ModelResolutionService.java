@@ -15,9 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -30,7 +30,8 @@ public class ModelResolutionService {
     private final BrandRepository brandRepository;
     private final LlmMatchClient llmMatchClient;
 
-    private final Map<String, Optional<LlmMatchResult>> llmResultCache = new ConcurrentHashMap<>();
+    private final Cache<String, Optional<LlmMatchResult>> llmResultCache =
+            Caffeine.newBuilder().maximumSize(10_000).build();
 
     @Transactional
     public Model resolve(CrawledProduct product) {
@@ -95,8 +96,9 @@ public class ModelResolutionService {
     }
 
     private Optional<LlmMatchResult> lookupLlmResult(CrawledProduct product, String normalizedBrand, String cacheKey) {
-        if (llmResultCache.containsKey(cacheKey)) {
-            return llmResultCache.get(cacheKey);
+        Optional<LlmMatchResult> cached = llmResultCache.getIfPresent(cacheKey);
+        if (cached != null) {
+            return cached;
         }
         try {
             Optional<LlmMatchResult> result = llmMatchClient.match(product);

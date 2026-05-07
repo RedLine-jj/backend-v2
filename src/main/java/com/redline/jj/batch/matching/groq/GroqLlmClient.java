@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.LongConsumer;
 
 @Slf4j
 @Component
@@ -26,6 +27,7 @@ public class GroqLlmClient implements LlmMatchClient {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
     private static final int MAX_RATE_LIMIT_RETRIES = 3;
+    private static final long MAX_RETRY_AFTER_SECONDS = 60L;
     static final long[] DEFAULT_BACKOFF_SECONDS = {2L, 5L, 10L};
 
     private final WebClient webClient;
@@ -34,6 +36,7 @@ public class GroqLlmClient implements LlmMatchClient {
     private final double confidenceThreshold;
     private final String promptTemplate;
     private final long[] backoffSeconds;
+    private final LongConsumer sleeper;
 
     @Autowired
     public GroqLlmClient(
@@ -46,7 +49,11 @@ public class GroqLlmClient implements LlmMatchClient {
             @Value("${groq.prompt}") String promptTemplate
     ) {
         this(webClientBuilder, baseUrl, apiKey, objectMapper, model,
-                confidenceThreshold, promptTemplate, DEFAULT_BACKOFF_SECONDS);
+                confidenceThreshold, promptTemplate, DEFAULT_BACKOFF_SECONDS,
+                seconds -> {
+                    try { Thread.sleep(seconds * 1_000); }
+                    catch (InterruptedException ex) { Thread.currentThread().interrupt(); }
+                });
     }
 
     GroqLlmClient(
@@ -57,7 +64,8 @@ public class GroqLlmClient implements LlmMatchClient {
             String model,
             double confidenceThreshold,
             String promptTemplate,
-            long[] backoffSeconds
+            long[] backoffSeconds,
+            LongConsumer sleeper
     ) {
         this.webClient = webClientBuilder
                 .baseUrl(baseUrl)
@@ -68,6 +76,7 @@ public class GroqLlmClient implements LlmMatchClient {
         this.confidenceThreshold = confidenceThreshold;
         this.promptTemplate = promptTemplate;
         this.backoffSeconds = backoffSeconds;
+        this.sleeper = sleeper;
     }
 
     @Override
@@ -92,12 +101,15 @@ public class GroqLlmClient implements LlmMatchClient {
                     log.warn("Groq 429 최대 재시도 초과 — brandName={}, modelName={}", brandName, modelName);
                     throw new BusinessException(ErrorCode.LLM_RATE_LIMITED);
                 }
-                long waitSeconds = (e.retryAfterSeconds >= 0) ? e.retryAfterSeconds : backoffSeconds[attempt];
+                long waitSeconds = (e.retryAfterSeconds >= 0)
+                        ? Math.min(e.retryAfterSeconds, MAX_RETRY_AFTER_SECONDS)
+                        : backoffSeconds[attempt];
                 log.warn("Groq 429 rate limit — {}회 재시도 ({}s 대기)", attempt + 1, waitSeconds);
                 sleepSeconds(waitSeconds);
             }
         }
-        throw new BusinessException(ErrorCode.LLM_RATE_LIMITED);
+        // 루프 내 attempt == MAX_RATE_LIMIT_RETRIES 분기에서 항상 throw하므로 도달 불가
+        throw new AssertionError("unreachable");
     }
 
     private LlmMatchResult executeGroqRequest(String brandName, String modelName) {
@@ -153,13 +165,7 @@ public class GroqLlmClient implements LlmMatchClient {
     }
 
     private void sleepSeconds(long seconds) {
-        if (seconds <= 0) return;
-        try {
-            Thread.sleep(seconds * 1000);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-            throw new BusinessException(ErrorCode.LLM_MATCHING_FAILED);
-        }
+        sleeper.accept(seconds);
     }
 
     private String extractJsonObject(String content) {
