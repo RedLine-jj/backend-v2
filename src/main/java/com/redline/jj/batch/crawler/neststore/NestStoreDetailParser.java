@@ -251,9 +251,11 @@ public class NestStoreDetailParser implements DetailParser {
         if (text == null) {
             return null;
         }
-        String unescapedText = Parser.unescapeEntities(text, false);
+        String htmlText = text.replaceAll("(?i)&nbsp;", " ");
+        String unescapedText = Parser.unescapeEntities(htmlText, false);
         return Jsoup.parseBodyFragment(unescapedText).text()
             .replaceAll("(?i)\\(\\s*RESTOCK\\s*\\)", " ")
+            .replace('\u00A0', ' ')
             .replaceAll("\\s+", " ")
             .trim();
     }
