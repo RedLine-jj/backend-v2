@@ -11,6 +11,7 @@ import com.redline.jj.domain.model.Model.ModelType;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -137,7 +138,8 @@ public class SemiBasementDetailParser implements DetailParser {
 
     private String extractModelName(Document doc) {
         return extractMetaContent(doc, "meta[property=og:title]")
-            .map(title -> title.replaceAll("\\s*:\\s*Semi Basement General Store.*$", "").trim())
+            .map(title -> title.replaceAll("\\s*:\\s*Semi Basement General Store.*$", ""))
+            .map(this::normalizeText)
             .filter(title -> !title.isBlank())
             .or(() -> selectText(doc, ".prod_goods_form h1, .shop_view h1, .view_tit, h1"))
             .orElseThrow(() -> new BusinessException(ErrorCode.CRAWLING_FAILED));
@@ -147,7 +149,7 @@ public class SemiBasementDetailParser implements DetailParser {
         if (productJson != null) {
             String brandName = productJson.path("brand").path("name").asText();
             if (!brandName.isBlank()) {
-                return Optional.of(brandName.trim());
+                return Optional.of(normalizeText(brandName));
             }
         }
 
@@ -156,7 +158,7 @@ public class SemiBasementDetailParser implements DetailParser {
     }
 
     private String normalizeBrandName(String brandName) {
-        return brandName.trim().toUpperCase(Locale.ROOT);
+        return normalizeText(brandName).toUpperCase(Locale.ROOT);
     }
 
     private Optional<String> selectText(Document doc, String selector) {
@@ -164,7 +166,7 @@ public class SemiBasementDetailParser implements DetailParser {
         if (element == null || element.text().isBlank()) {
             return Optional.empty();
         }
-        return Optional.of(element.text().trim());
+        return Optional.of(normalizeText(element.text()));
     }
 
     private Optional<String> extractMetaContent(Document doc, String selector) {
@@ -172,7 +174,15 @@ public class SemiBasementDetailParser implements DetailParser {
         if (element == null || element.attr("content").isBlank()) {
             return Optional.empty();
         }
-        return Optional.of(element.attr("content").trim());
+        return Optional.of(normalizeText(element.attr("content")));
+    }
+
+    private String normalizeText(String text) {
+        String htmlText = text.replaceAll("(?i)&nbsp;", " ");
+        return Parser.unescapeEntities(htmlText, false)
+            .replace('\u00A0', ' ')
+            .replaceAll("\\s+", " ")
+            .trim();
     }
 
     private Integer extractPrice(Document doc) {

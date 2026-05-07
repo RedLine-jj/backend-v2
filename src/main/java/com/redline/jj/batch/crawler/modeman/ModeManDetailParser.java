@@ -272,7 +272,11 @@ public class ModeManDetailParser implements DetailParser {
         if (text == null) {
             return null;
         }
-        return Parser.unescapeEntities(text, false).trim();
+        String htmlText = text.replaceAll("(?i)&nbsp;", " ");
+        return Parser.unescapeEntities(htmlText, false)
+            .replace('\u00A0', ' ')
+            .replaceAll("\\s+", " ")
+            .trim();
     }
 
     private boolean extractInStock(Document doc, JsonNode productJson) {

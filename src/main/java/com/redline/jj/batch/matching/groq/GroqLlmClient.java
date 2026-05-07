@@ -36,7 +36,7 @@ public class GroqLlmClient implements LlmMatchClient {
             @Value("${groq.base-url:https://api.groq.com/openai/v1/chat/completions}") String baseUrl,
             @Value("${groq.api-key}") String apiKey,
             ObjectMapper objectMapper,
-            @Value("${groq.model:llama3-8b-8192}") String model,
+            @Value("${groq.model:llama-3.1-8b-instant}") String model,
             @Value("${groq.confidence-threshold:85.0}") double confidenceThreshold,
             @Value("${groq.prompt}") String promptTemplate
     ) {

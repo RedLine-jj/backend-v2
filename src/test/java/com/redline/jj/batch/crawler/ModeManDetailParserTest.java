@@ -115,6 +115,39 @@ class ModeManDetailParserTest {
     }
 
     @Test
+    @DisplayName("브랜드명의 대문자 NBSP 엔티티를 공백으로 정규화한다")
+    void parse_JSONLD브랜드명_NBSP엔티티_공백정규화() {
+        String html = """
+            <html><body>
+                <script type="application/ld+json">
+                {
+                    "@context": "https://schema.org",
+                    "@type": "Product",
+                    "name": "Aviator Denim",
+                    "brand": {
+                        "@type": "Brand",
+                        "name": "BIRD&NBSP;NOTE"
+                    },
+                    "offers": [
+                        {
+                            "name": "Aviator Denim 30",
+                            "price": 198000,
+                            "availability": "InStock"
+                        }
+                    ]
+                }
+                </script>
+            </body></html>
+            """;
+
+        server.enqueue(new MockResponse().setBody(html).setResponseCode(200));
+
+        CrawledProduct result = parser.parse(server.url("/product/sample/1/category/858/display/1/").toString());
+
+        assertThat(result.brandName()).isEqualTo("BIRD NOTE");
+    }
+
+    @Test
     @DisplayName("ModeMan JSON-LD offers를 옵션별 상품으로 모두 파싱한다")
     void parseAll_JSONLDOffers_옵션별CrawledProduct반환() {
         String html = """

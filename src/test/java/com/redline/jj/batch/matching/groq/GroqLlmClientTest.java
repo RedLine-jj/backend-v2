@@ -39,7 +39,7 @@ class GroqLlmClientTest {
                 groqServer.url("/").toString(),
                 "test-key",
                 new ObjectMapper(),
-                "llama3-8b-8192",
+                "llama-3.1-8b-instant",
                 85.0,
                 "테스트 프롬프트 — 브랜드: {brandHint}, 상품명: {siteModelName}"
         );
@@ -306,7 +306,7 @@ class GroqLlmClientTest {
         RecordedRequest request = groqServer.takeRequest();
         String requestBody = request.getBody().readUtf8();
 
-        assertThat(requestBody).contains("llama3-8b-8192");
+        assertThat(requestBody).contains("llama-3.1-8b-instant");
     }
 
     // -----------------------------------------------------------------------
