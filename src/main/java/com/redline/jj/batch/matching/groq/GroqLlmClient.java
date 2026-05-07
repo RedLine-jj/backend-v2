@@ -8,6 +8,7 @@ import com.redline.jj.batch.matching.LlmMatchResult;
 import com.redline.jj.common.exception.BusinessException;
 import com.redline.jj.common.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,7 @@ public class GroqLlmClient implements LlmMatchClient {
     private final String promptTemplate;
     private final long[] backoffSeconds;
 
+    @Autowired
     public GroqLlmClient(
             WebClient.Builder webClientBuilder,
             @Value("${groq.base-url:https://api.groq.com/openai/v1/chat/completions}") String baseUrl,
