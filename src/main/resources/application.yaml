@@ -21,7 +21,8 @@ spring:
       # true로 바꾸면 앱 시작 시 자동 실행 대상 Job 이름을 지정해야 한다.
       enabled: false
     jdbc:
-      initialize-schema: embedded
+      # 외부 DB는 docs/batch-schema-mysql.sql을 먼저 적용한다.
+      initialize-schema: never
 
 management:
   endpoints:

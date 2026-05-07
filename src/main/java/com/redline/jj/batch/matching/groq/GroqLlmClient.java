@@ -88,7 +88,7 @@ public class GroqLlmClient implements LlmMatchClient {
             }
 
             String content = apiResponse.choices().get(0).message().content();
-            return objectMapper.readValue(content, LlmMatchResult.class);
+            return objectMapper.readValue(extractJsonObject(content), LlmMatchResult.class);
 
         } catch (JsonProcessingException e) {
             log.warn("Groq 응답 JSON 파싱 실패 — brandName={}, modelName={}", brandName, modelName, e);
@@ -102,5 +102,48 @@ public class GroqLlmClient implements LlmMatchClient {
             log.warn("Groq API 호출 중 예외 발생 — brandName={}, modelName={}", brandName, modelName, e);
             throw new BusinessException(ErrorCode.LLM_MATCHING_FAILED);
         }
+    }
+
+    private String extractJsonObject(String content) {
+        if (content == null || content.isBlank()) {
+            throw new BusinessException(ErrorCode.LLM_MATCHING_FAILED);
+        }
+
+        int startIndex = content.indexOf('{');
+        if (startIndex < 0) {
+            throw new BusinessException(ErrorCode.LLM_MATCHING_FAILED);
+        }
+
+        int depth = 0;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int index = startIndex; index < content.length(); index++) {
+            char current = content.charAt(index);
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (current == '\\') {
+                escaped = inString;
+                continue;
+            }
+            if (current == '"') {
+                inString = !inString;
+                continue;
+            }
+            if (inString) {
+                continue;
+            }
+            if (current == '{') {
+                depth++;
+            } else if (current == '}') {
+                depth--;
+                if (depth == 0) {
+                    return content.substring(startIndex, index + 1);
+                }
+            }
+        }
+
+        throw new BusinessException(ErrorCode.LLM_MATCHING_FAILED);
     }
 }

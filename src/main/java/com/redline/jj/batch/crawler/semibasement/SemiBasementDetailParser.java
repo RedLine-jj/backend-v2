@@ -178,6 +178,9 @@ public class SemiBasementDetailParser implements DetailParser {
     }
 
     private String normalizeText(String text) {
+        if (text == null) {
+            return null;
+        }
         String htmlText = text.replaceAll("(?i)&nbsp;", " ");
         return Parser.unescapeEntities(htmlText, false)
             .replace('\u00A0', ' ')

@@ -108,6 +108,29 @@ class GroqLlmClientTest {
                         .isEqualTo(ErrorCode.LLM_MATCHING_FAILED));
     }
 
+    @Test
+    @DisplayName("LLM 응답에 설명문이 섞여도 JSON 객체만 추출해 파싱한다")
+    void match_설명문포함응답_JSON객체추출_정상파싱() {
+        String content = "WAREHOUSE의 해당 상품은 기존 모델과 매칭됩니다. " +
+                "{\"brandName\":\"WAREHOUSE\",\"modelName\":\"Lot 1100 2nd Hand Tapered Selvedge Denim Used Wash Black\",\"confidence\":91.5}";
+
+        groqServer.enqueue(new MockResponse()
+                .setBody(buildGroqResponse(content))
+                .addHeader("Content-Type", "application/json")
+                .setResponseCode(200));
+
+        Optional<LlmMatchResult> result = groqLlmClient.match(buildProduct(
+                "WAREHOUSE",
+                "Lot 1100 2nd Hand Tapered Selvedge Denim Used Wash Black",
+                "Lot 1100 2nd Hand Tapered Selvedge Denim Used Wash Black"
+        ));
+
+        assertThat(result).isPresent();
+        assertThat(result.get().brandName()).isEqualTo("WAREHOUSE");
+        assertThat(result.get().modelName()).isEqualTo("Lot 1100 2nd Hand Tapered Selvedge Denim Used Wash Black");
+        assertThat(result.get().confidence()).isEqualTo(91.5);
+    }
+
     // -----------------------------------------------------------------------
     // 1. @JsonIgnoreProperties 동작 검증
     //    응답 JSON에 unknown 필드(usage, extra)가 포함돼도 정상 파싱되어야 한다.
