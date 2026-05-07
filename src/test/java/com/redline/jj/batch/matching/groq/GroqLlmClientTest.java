@@ -19,6 +19,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,11 +31,14 @@ class GroqLlmClientTest {
 
     private MockWebServer groqServer;
     private GroqLlmClient groqLlmClient;
+    private List<Long> recordedSleeps;
 
     @BeforeEach
     void setUp() throws IOException {
         groqServer = new MockWebServer();
         groqServer.start();
+        recordedSleeps = new ArrayList<>();
+        recordedSleeps.clear();
         groqLlmClient = new GroqLlmClient(
                 WebClient.builder(),
                 groqServer.url("/").toString(),
@@ -42,7 +47,8 @@ class GroqLlmClientTest {
                 "llama-3.1-8b-instant",
                 85.0,
                 "테스트 프롬프트 — 브랜드: {brandHint}, 상품명: {siteModelName}",
-                new long[]{0L, 0L, 0L}
+                new long[]{2L, 5L, 10L},
+                recordedSleeps::add
         );
     }
 
@@ -365,6 +371,7 @@ class GroqLlmClientTest {
 
         assertThat(result).isPresent();
         assertThat(groqServer.getRequestCount()).isEqualTo(2);
+        assertThat(recordedSleeps).containsExactly(2L);
     }
 
     @Test
@@ -379,6 +386,7 @@ class GroqLlmClientTest {
                 .satisfies(ex -> assertThat(((BusinessException) ex).getErrorCode())
                         .isEqualTo(ErrorCode.LLM_RATE_LIMITED));
         assertThat(groqServer.getRequestCount()).isEqualTo(4);
+        assertThat(recordedSleeps).containsExactly(2L, 5L, 10L);
     }
 
     @Test
@@ -396,6 +404,7 @@ class GroqLlmClientTest {
 
         assertThat(result).isPresent();
         assertThat(groqServer.getRequestCount()).isEqualTo(2);
+        assertThat(recordedSleeps).containsExactly(0L);
     }
 
     @Test
@@ -411,6 +420,7 @@ class GroqLlmClientTest {
 
         assertThat(result).isPresent();
         assertThat(groqServer.getRequestCount()).isEqualTo(2);
+        assertThat(recordedSleeps).containsExactly(2L);
     }
 
     @Test

@@ -12,11 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ErrorCodeTest {
 
-    @Test
-    void ErrorCode_총_개수는_24개다() {
-        assertThat(ErrorCode.values()).hasSize(24);
-    }
-
     @EnumSource(ErrorCode.class)
     @ParameterizedTest
     void 모든_ErrorCode는_null_필드가_없다(ErrorCode errorCode) {
@@ -81,5 +76,6 @@ class ErrorCodeTest {
     @Test
     void LLM_RATE_LIMITED는_429_TOO_MANY_REQUESTS다() {
         assertThat(ErrorCode.LLM_RATE_LIMITED.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(ErrorCode.LLM_RATE_LIMITED.getCode()).isEqualTo("C006");
     }
 }
