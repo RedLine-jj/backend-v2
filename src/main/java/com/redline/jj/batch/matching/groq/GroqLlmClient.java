@@ -24,12 +24,15 @@ import java.util.Optional;
 public class GroqLlmClient implements LlmMatchClient {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
+    private static final int MAX_RATE_LIMIT_RETRIES = 3;
+    static final long[] DEFAULT_BACKOFF_SECONDS = {2L, 5L, 10L};
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final String model;
     private final double confidenceThreshold;
     private final String promptTemplate;
+    private final long[] backoffSeconds;
 
     public GroqLlmClient(
             WebClient.Builder webClientBuilder,
@@ -40,6 +43,20 @@ public class GroqLlmClient implements LlmMatchClient {
             @Value("${groq.confidence-threshold:85.0}") double confidenceThreshold,
             @Value("${groq.prompt}") String promptTemplate
     ) {
+        this(webClientBuilder, baseUrl, apiKey, objectMapper, model,
+                confidenceThreshold, promptTemplate, DEFAULT_BACKOFF_SECONDS);
+    }
+
+    GroqLlmClient(
+            WebClient.Builder webClientBuilder,
+            String baseUrl,
+            String apiKey,
+            ObjectMapper objectMapper,
+            String model,
+            double confidenceThreshold,
+            String promptTemplate,
+            long[] backoffSeconds
+    ) {
         this.webClient = webClientBuilder
                 .baseUrl(baseUrl)
                 .defaultHeader("Authorization", "Bearer " + apiKey)
@@ -48,11 +65,12 @@ public class GroqLlmClient implements LlmMatchClient {
         this.model = model;
         this.confidenceThreshold = confidenceThreshold;
         this.promptTemplate = promptTemplate;
+        this.backoffSeconds = backoffSeconds;
     }
 
     @Override
     public Optional<LlmMatchResult> match(CrawledProduct product) {
-        LlmMatchResult llmResult = callGroqApi(product.brandName(), product.siteModelName());
+        LlmMatchResult llmResult = callGroqApiWithRetry(product.brandName(), product.siteModelName());
 
         if (llmResult.confidence() < confidenceThreshold) {
             log.debug("LLM confidence {:.1f} < {} — no match for product: {}",
@@ -63,7 +81,24 @@ public class GroqLlmClient implements LlmMatchClient {
         return Optional.of(llmResult);
     }
 
-    private LlmMatchResult callGroqApi(String brandName, String modelName) {
+    private LlmMatchResult callGroqApiWithRetry(String brandName, String modelName) {
+        for (int attempt = 0; attempt <= MAX_RATE_LIMIT_RETRIES; attempt++) {
+            try {
+                return executeGroqRequest(brandName, modelName);
+            } catch (GroqRateLimitException e) {
+                if (attempt == MAX_RATE_LIMIT_RETRIES) {
+                    log.warn("Groq 429 최대 재시도 초과 — brandName={}, modelName={}", brandName, modelName);
+                    throw new BusinessException(ErrorCode.LLM_RATE_LIMITED);
+                }
+                long waitSeconds = (e.retryAfterSeconds >= 0) ? e.retryAfterSeconds : backoffSeconds[attempt];
+                log.warn("Groq 429 rate limit — {}회 재시도 ({}s 대기)", attempt + 1, waitSeconds);
+                sleepSeconds(waitSeconds);
+            }
+        }
+        throw new BusinessException(ErrorCode.LLM_RATE_LIMITED);
+    }
+
+    private LlmMatchResult executeGroqRequest(String brandName, String modelName) {
         String prompt = promptTemplate
                 .replace("{brandHint}", brandName)
                 .replace("{siteModelName}", modelName);
@@ -77,6 +112,15 @@ public class GroqLlmClient implements LlmMatchClient {
             GroqApiResponse apiResponse = webClient.post()
                     .bodyValue(request)
                     .retrieve()
+                    .onStatus(status -> status.value() == 429, clientResponse -> {
+                        String retryAfterHeader = clientResponse.headers().asHttpHeaders().getFirst("Retry-After");
+                        long seconds = -1;
+                        if (retryAfterHeader != null) {
+                            try { seconds = Long.parseLong(retryAfterHeader.trim()); }
+                            catch (NumberFormatException ignored) {}
+                        }
+                        return Mono.error(new GroqRateLimitException(seconds));
+                    })
                     .onStatus(HttpStatusCode::isError,
                             r -> Mono.error(new BusinessException(ErrorCode.LLM_MATCHING_FAILED)))
                     .bodyToMono(GroqApiResponse.class)
@@ -90,6 +134,8 @@ public class GroqLlmClient implements LlmMatchClient {
             String content = apiResponse.choices().get(0).message().content();
             return objectMapper.readValue(extractJsonObject(content), LlmMatchResult.class);
 
+        } catch (GroqRateLimitException e) {
+            throw e;
         } catch (JsonProcessingException e) {
             log.warn("Groq 응답 JSON 파싱 실패 — brandName={}, modelName={}", brandName, modelName, e);
             throw new BusinessException(ErrorCode.LLM_MATCHING_FAILED);
@@ -100,6 +146,16 @@ public class GroqLlmClient implements LlmMatchClient {
             throw e;
         } catch (Exception e) {
             log.warn("Groq API 호출 중 예외 발생 — brandName={}, modelName={}", brandName, modelName, e);
+            throw new BusinessException(ErrorCode.LLM_MATCHING_FAILED);
+        }
+    }
+
+    private void sleepSeconds(long seconds) {
+        if (seconds <= 0) return;
+        try {
+            Thread.sleep(seconds * 1000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
             throw new BusinessException(ErrorCode.LLM_MATCHING_FAILED);
         }
     }
