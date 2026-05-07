@@ -86,17 +86,17 @@ PRD의 핵심 구현 항목은 이미 코드에 반영된 상태이다. 이 로�
 
 ### 3-1. LLM 결과 캐시 동작
 
-- [ ] 동일 `normalizedBrand + siteModelName`으로 두 번 호출 시 `llmMatchClient.match` 1회만 호출됨 확인
-- [ ] confidence 미달 결과(`Optional.empty()`)도 캐시되어 두 번째 호출에서 LLM 미호출 확인
-- [ ] 429 예외 발생 시 캐시에 저장되지 않아 다음 호출에서 LLM 재호출됨 확인
+- [x] 동일 `normalizedBrand + siteModelName`으로 두 번 호출 시 `llmMatchClient.match` 1회만 호출됨 확인
+- [x] confidence 미달 결과(`Optional.empty()`)도 캐시되어 두 번째 호출에서 LLM 미호출 확인
+- [x] 429 예외 발생 시 캐시에 저장되지 않아 다음 호출에서 LLM 재호출됨 확인
 
 ### 3-2. 429 fallback 저장 차단
 
-- [ ] `LLM_RATE_LIMITED` 발생 시 `modelRepository.save`, `modelAliasRepository.save`, `brandRepository.save` 미호출 확인
+- [x] `LLM_RATE_LIMITED` 발생 시 `modelRepository.save`, `modelAliasRepository.save`, `brandRepository.save` 미호출 확인
 
 ### 3-3. 기존 흐름 유지
 
-- [ ] LLM 반환 canonical 모델명이 DB에 없을 때 LLM 결과명으로 신규 모델 저장하는 기존 흐름 통과 확인
+- [x] LLM 반환 canonical 모델명이 DB에 없을 때 LLM 결과명으로 신규 모델 저장하는 기존 흐름 통과 확인
 
 **테스트 실행**
 
